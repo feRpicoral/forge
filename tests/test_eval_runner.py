@@ -26,16 +26,18 @@ def _suite(**overrides: object) -> EvalSuite:
     return EvalSuite(**defaults)  # type: ignore[arg-type]
 
 
-def test_command_uses_local_chat_completions_model() -> None:
+def test_command_uses_local_completions_model() -> None:
     cmd = _build_command("/lm-eval", _suite())
     assert cmd[0] == "/lm-eval"
-    assert cmd[cmd.index("--model") + 1] == "local-chat-completions"
+    # local-completions supports both loglikelihood (MMLU, HellaSwag) and
+    # generate_until (GSM8K). local-chat-completions does not.
+    assert cmd[cmd.index("--model") + 1] == "local-completions"
 
 
-def test_command_model_args_targets_chat_completions_endpoint() -> None:
+def test_command_model_args_targets_completions_endpoint() -> None:
     cmd = _build_command("/lm-eval", _suite())
     model_args = cmd[cmd.index("--model_args") + 1]
-    assert "base_url=http://localhost:8000/v1/chat/completions" in model_args
+    assert "base_url=http://localhost:8000/v1/completions" in model_args
     assert "model=Qwen/Qwen2.5-0.5B-Instruct" in model_args
 
 

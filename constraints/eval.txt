@@ -5,7 +5,10 @@
 # keeps it out of the project lock.
 #
 # Usage:
-#   uv pip install -c constraints/eval.txt lm-eval
+#   uv pip install -c constraints/eval.txt "lm-eval[api]"
+#
+# The [api] extra is required for the local-chat-completions model type we
+# use to evaluate against vLLM's OpenAI-compatible endpoint.
 #
 # Validated combinations (record exact versions resolved at install time in
 # DECISIONS.md):
