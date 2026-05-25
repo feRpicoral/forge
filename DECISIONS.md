@@ -2,6 +2,25 @@
 
 > Forward-looking record of technical choices for Forge, with the alternatives considered and the reasoning. Updated incrementally as the project progresses. Each decision pins the *exact* version actually used after `uv sync` completes — never a speculative range.
 
+## Project status
+
+| Phase | Description | Status |
+|---|---|---|
+| 0 | Repo + tooling foundation (uv, Ruff, mypy, pytest, CI) | ✅ complete |
+| 1 | Serving layer + Docker images, validated on M1 CPU | ✅ complete |
+| 2 | Benchmark harness wrapping `vllm bench serve`, golden fixtures from real M1 run | ✅ complete |
+| 3 | AWQ quantization recipe + CLI | ✅ complete |
+| 4 | `lm-evaluation-harness` wrapper + retention math | ✅ complete |
+| 5 | Cost-per-1M-tokens model + pricing tables | ✅ complete |
+| 6 | Pre-flight checklist + RunPod orchestrator, rehearsed end-to-end on M1 | ✅ complete |
+| 7 | **Paid benchmark run on RunPod (BF16 + AWQ sweep, full eval)** | ⏸ awaiting GPU rental |
+| 8 | Grafana dashboard (9 panels, auto-provisioned) | ✅ complete |
+| 9 | Chart pipeline (5 canonical charts) + impact-first README + illustrative data | ✅ complete |
+| 10 | HuggingFace Spaces Gradio demo with live TTFT / TPOT capture | ✅ complete |
+| 11 | Final polish + `v1.0.0` tag | 🟡 partial — full tag waits on Phase 7 |
+
+Everything Phase 7 needs is in place. The pre-flight rehearsal (`make rehearse`) completes on M1 with zero manual intervention, exercising the exact orchestrator that runs on RunPod. After Phase 7 lands, the illustrative numbers in the README and `results/charts/` get replaced wholesale in a single commit, and the repo is tagged `v1.0.0`.
+
 ## Scope
 
 Forge is a portfolio piece, not a SaaS. It serves an open-source LLM via a production-grade stack and produces a defensible benchmark + cost analysis. Decisions favor: (1) industry-standard tooling that signals familiarity with how serving is done in production, (2) reproducibility, (3) cost-conscious paid GPU usage.
