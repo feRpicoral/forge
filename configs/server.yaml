@@ -1,0 +1,27 @@
+# vLLM serving config — reference document, not auto-loaded.
+#
+# scripts/serve.py reads its config from environment variables (see .env.example).
+# This file exists to document the flags we *intentionally* set, with links to the
+# upstream vLLM docs. Every CUDA-only flag must be reviewed in the Phase 6
+# pre-flight checklist.
+#
+# vLLM CLI reference: https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html
+# vLLM engine args:   https://docs.vllm.ai/en/stable/serving/engine_args.html
+
+model_id: meta-llama/Llama-3.1-8B-Instruct   # paid-run target. M1 smoke uses Qwen/Qwen2.5-0.5B-Instruct via env override.
+quantization: awq                              # AWQ-INT4 with Marlin kernels. Set to `none` for BF16 baseline.
+
+# Sequence + batching ----------------------------------------------------------
+max_model_len: 4096      # prompt + generation budget. 4096 fits ShareGPT-style workloads.
+max_num_seqs: 128        # concurrent sequences the scheduler batches.
+
+# Networking -------------------------------------------------------------------
+host: 0.0.0.0            # bind on all interfaces inside the container.
+port: 8000
+
+# --- CUDA-only block (silently ignored by the macOS CPU backend) --------------
+gpu_memory_utilization: 0.90  # leave 10% headroom for activations + CUDA graphs.
+kv_cache_dtype: auto          # `auto` selects per-engine default. `fp8` halves KV
+                              # cache memory on H100/Ada with negligible quality loss,
+                              # but is unsupported on RTX 4090 (no FP8 KV path).
+tensor_parallel_size: 1       # single-GPU. Multi-GPU sharding is out of scope.
