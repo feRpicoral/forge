@@ -1,0 +1,38 @@
+{
+  "self_hosted": [
+    {
+      "label": "Forge \u2014 BF16 on 4090",
+      "usd_per_1m_tokens": 0.019883040935672516,
+      "notes": "RunPod RTX 4090 (Community) at 4750 tok/s sustained, 100% utilization."
+    },
+    {
+      "label": "Forge \u2014 AWQ-INT4 on 4090",
+      "usd_per_1m_tokens": 0.009169363538295576,
+      "notes": "RunPod RTX 4090 (Community) at 10300 tok/s sustained, 100% utilization."
+    }
+  ],
+  "api": [
+    {
+      "label": "GPT-4o",
+      "usd_per_1m_tokens": 10.0,
+      "notes": "input $5.00/1M, output $15.00/1M, blended at 50% input."
+    },
+    {
+      "label": "GPT-4o mini",
+      "usd_per_1m_tokens": 0.375,
+      "notes": "input $0.15/1M, output $0.60/1M, blended at 50% input."
+    },
+    {
+      "label": "Claude Sonnet 4.6",
+      "usd_per_1m_tokens": 9.0,
+      "notes": "input $3.00/1M, output $15.00/1M, blended at 50% input."
+    },
+    {
+      "label": "Claude Haiku 4.5",
+      "usd_per_1m_tokens": 2.4,
+      "notes": "input $0.80/1M, output $4.00/1M, blended at 50% input."
+    }
+  ],
+  "input_share": 0.5,
+  "notes": []
+}

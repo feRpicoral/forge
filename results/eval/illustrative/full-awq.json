@@ -1,0 +1,25 @@
+{
+  "_illustrative": true,
+  "results": {
+    "hellaswag": {
+      "acc,none": 0.5743,
+      "acc_norm,none": 0.7782
+    },
+    "mmlu": {
+      "acc,none": 0.6689
+    },
+    "gsm8k": {
+      "exact_match,strict-match": 0.7999,
+      "exact_match,flexible-extract": 0.8051
+    }
+  },
+  "n-shot": {
+    "hellaswag": 5,
+    "mmlu": 5,
+    "gsm8k": 5
+  },
+  "config": {
+    "model": "local-completions",
+    "model_args": "model=hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4"
+  }
+}
