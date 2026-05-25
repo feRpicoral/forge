@@ -63,6 +63,13 @@ Exact versions are recorded under "Pinned versions" after the first successful `
   - [LLM Quantization Explained (VRLA Tech)](https://vrlatech.com/llm-quantization-explained-int4-int8-fp8-awq-and-gptq-in-2026/)
   - [vLLM Quantization Guide (Jarvis Labs)](https://jarvislabs.ai/blog/vllm-quantization-complete-guide-benchmarks)
 
+### Self-quantization vs. pre-quantized checkpoint
+- **Primary benchmark uses the community pre-quantized AWQ checkpoint**: [`hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4`](https://huggingface.co/hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4).
+  - **Why**: AWQ quantization requires a CUDA GPU for the calibration pass. Quantizing on the same paid RunPod GPU we use for benchmarking would consume ~30 min of the budget without changing the benchmark methodology. The community checkpoint uses the canonical recipe (`w_bit=4`, `q_group_size=128`, `zero_point=True`, `version=GEMM`) — exactly what `forge/quantization/awq.py` produces.
+  - **Risk**: a third-party checkpoint could differ from the recipe we document. Mitigation: verify the published config against `forge/quantization/awq.py` defaults before the paid run.
+- **Self-quantization is documented as a reproducibility path**: `python -m scripts.quantize --source meta-llama/Llama-3.1-8B-Instruct`. The CLI accepts overrides for every recipe parameter and writes an HF-compatible checkpoint locally.
+- **Calibration data**: AutoAWQ's default 512-sample slice of `mit-han-lab/pile-val-backup`. Adequate for general-purpose models; not tuned for a domain.
+
 ### GPU: RunPod RTX 4090 24 GB Community
 - **Why**: Cheapest tier at ~$0.34/hr that fits Llama 3.1 8B BF16 (16 GB weights + KV cache headroom). Budget-aligned with the user's tight cost cap. Community tier accepted because the benchmark is short and re-runnable.
 - **Alternatives**: A100 40 GB (~$1.19/hr — 3.5x cost), H100 80 GB (~$3+/hr — out of budget for the scoped run). Multi-tier sweep was rejected for budget reasons.
