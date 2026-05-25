@@ -1,0 +1,17 @@
+# M1 smoke eval — validates the wiring against a tiny model.
+#
+# Real numbers from this config are meaningless (Qwen 0.5B is not on the
+# leaderboard for these tasks). The only point is to confirm that lm-eval
+# successfully drives our vLLM endpoint and writes a parseable JSON.
+
+name: smoke
+description: M1 smoke eval — wiring validation only.
+variant: smoke
+model: Qwen/Qwen2.5-0.5B-Instruct
+base_url: http://localhost:8000/v1
+tasks: [hellaswag]
+num_fewshot: 0
+batch_size: 1
+limit: 4
+seed: 42
+result_dir: results/eval/smoke

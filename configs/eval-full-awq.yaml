@@ -1,0 +1,13 @@
+# Full AWQ eval — pairs with eval-full-bf16.yaml.
+
+name: full
+description: Llama 3.1 8B AWQ-INT4 — MMLU/GSM8K/HellaSwag.
+variant: awq
+model: hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4
+base_url: http://localhost:8000/v1
+tasks: [hellaswag, mmlu, gsm8k]
+num_fewshot: 5
+batch_size: 4
+limit: null
+seed: 42
+result_dir: results/eval/full
