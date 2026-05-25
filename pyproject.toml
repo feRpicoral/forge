@@ -81,6 +81,14 @@ files = ["forge", "scripts", "tests"]
 module = "tests.*"
 disallow_untyped_defs = false
 
+# Quantization-only deps lack ship type stubs. ``transformers`` IS installed
+# locally (via constraints/serve.txt) but not in CI; ``awq`` is GPU-only and
+# never installed in CI. Marking them as missing-imports-OK + untyped-calls-OK
+# keeps both environments happy without per-call ``# type: ignore`` noise.
+[[tool.mypy.overrides]]
+module = ["awq", "awq.*", "transformers", "transformers.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --cov=forge --cov-report=term-missing --cov-report=xml"
