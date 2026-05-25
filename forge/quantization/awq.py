@@ -72,8 +72,10 @@ def quantize(config: AWQConfig) -> Path:
     output_path = config.output_path.absolute()
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # transformers ships no .pyi stubs; calls are untyped in mypy's view.
-    tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call]
+    # transformers ships no .pyi stubs. The ``unused-ignore`` suffix keeps the
+    # comment harmless on CI (where transformers isn't installed and the call
+    # is Any-typed anyway).
+    tokenizer = AutoTokenizer.from_pretrained(  # type: ignore[no-untyped-call, unused-ignore]
         config.source_model, trust_remote_code=True
     )
     model = AutoAWQForCausalLM.from_pretrained(
