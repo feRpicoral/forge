@@ -99,23 +99,33 @@ Exact versions are recorded under "Pinned versions" after the first successful `
 
 ## Pinned versions
 
-To be filled in after the first successful `uv sync` on the M1.
+Recorded at first successful smoke on the M1 (Phase 1, 2026-05-25). Project deps live in `uv.lock`; vLLM and transformers are installed out-of-band against `constraints/serve.txt` because they don't lock cleanly across platforms (see "vLLM is not a managed dep" below).
 
-```
-python: <version>
-ruff: <version>
-mypy: <version>
-pytest: <version>
-pytest-cov: <version>
-pre-commit: <version>
-```
+| Package | Version | Source |
+|---|---|---|
+| python | 3.12.13 | uv-managed |
+| ruff | 0.15.14 | `[dependency-groups] dev` |
+| mypy | 2.1.0 | `[dependency-groups] dev` |
+| pytest | 9.0.3 | `[dependency-groups] dev` |
+| pytest-cov | 7.1.0 | `[dependency-groups] dev` |
+| pre-commit | 4.6.0 | `[dependency-groups] dev` |
+| vllm | 0.11.0 | `constraints/serve.txt` |
+| transformers | 4.57.6 | `constraints/serve.txt` (vLLM 0.11 needs 4.x) |
+| torch | 2.8.0 | vLLM transitive |
 
-vLLM, transformers, torch, AutoAWQ, lm-evaluation-harness pins land in Phase 1+ as each module is added.
+AutoAWQ + lm-evaluation-harness pins land in Phases 3 and 4 respectively.
 
 ## Compatibility matrix (validated)
 
-To be filled in after the first end-to-end M1 smoke and the first paid RunPod run. Critical pairs:
-- torch ↔ CUDA
-- torch ↔ vLLM
-- vLLM ↔ transformers
-- vLLM ↔ AutoAWQ
+| Combination | Status | Notes |
+|---|---|---|
+| Python 3.12 ↔ vLLM 0.11.0 | ✅ M1 darwin arm64 | First-token completion served against `Qwen/Qwen2.5-0.5B-Instruct` on CPU. |
+| vLLM 0.11.0 ↔ transformers 5.x | ❌ broken | `AttributeError: Qwen2Tokenizer has no attribute all_special_tokens_extended`. The transformers 5.x line removed the attribute; vLLM 0.11.0 still calls it. Pinning to `transformers>=4.45,<5.0` resolves. |
+| vLLM 0.11.0 ↔ transformers 4.57.6 | ✅ M1 darwin arm64 | Validated. |
+| Linux CUDA matrix | ⬜ pending Phase 7 | torch ↔ CUDA driver ↔ vLLM compatibility validated on the RunPod GPU before the paid run. |
+
+## vLLM is not a managed dep
+
+Adding vLLM to `pyproject.toml` forces uv to resolve transitives like `nvidia-cudnn-frontend` for *every* platform in the lock — and those packages have no wheels for darwin arm64. The lock fails on M1.
+
+The chosen pattern: vLLM (and any other GPU-coupled runtime dep) is installed out-of-band via `uv pip install -c constraints/serve.txt vllm` from a constraint file that pins the compatible transformers. The project lock stays clean and platform-portable; the Dockerfile and `docs/local-dev.md` both reference the same constraint file so there's a single source of truth for the pin.
