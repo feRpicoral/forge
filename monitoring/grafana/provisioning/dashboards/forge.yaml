@@ -1,0 +1,15 @@
+# Auto-provisions the Forge dashboard at Grafana startup.
+# Mounted into the Grafana container by docker-compose.
+
+apiVersion: 1
+
+providers:
+  - name: "forge"
+    orgId: 1
+    folder: "Forge"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
