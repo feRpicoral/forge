@@ -6,7 +6,10 @@ readme = "README.md"
 requires-python = ">=3.12,<3.13"
 authors = [{ name = "Fernando Picoral", email = "fernandopicoral@gmail.com" }]
 license = { text = "MIT" }
-dependencies = []
+dependencies = [
+    "pyyaml>=6.0.3",
+    "types-pyyaml>=6.0.12.20260518",
+]
 
 [build-system]
 requires = ["hatchling"]
