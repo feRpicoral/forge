@@ -58,6 +58,9 @@ hf_cache/
 
 # Benchmark scratch (committed results live in results/, but intermediate scratch doesn't)
 results/scratch/
+# Smoke-test outputs are local-only: M1 CPU numbers from a tiny model are not
+# defensible benchmark data. The committed results/ artifacts are from RunPod.
+results/bench/smoke/
 runs/
 
 # Models (never commit weights)
