@@ -1,0 +1,16 @@
+# Full BF16 eval — RunPod RTX 4090, Llama 3.1 8B at full precision.
+#
+# Reviewed line-by-line in the Phase 6 pre-flight checklist before the paid run.
+
+name: full
+description: Llama 3.1 8B BF16 — MMLU/GSM8K/HellaSwag.
+variant: bf16
+model: meta-llama/Llama-3.1-8B-Instruct
+base_url: http://localhost:8000/v1
+# Order matters for cache locality but not correctness.
+tasks: [hellaswag, mmlu, gsm8k]
+num_fewshot: 5
+batch_size: 4
+limit: null
+seed: 42
+result_dir: results/eval/full

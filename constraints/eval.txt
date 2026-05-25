@@ -1,0 +1,17 @@
+# Constraints for installing lm-evaluation-harness into the uv-managed venv.
+#
+# Like vLLM, lm-eval pulls in CUDA-coupled transitives that don't resolve
+# cleanly on darwin arm64 when locked. The constraint-file install pattern
+# keeps it out of the project lock.
+#
+# Usage:
+#   uv pip install -c constraints/eval.txt lm-eval
+#
+# Validated combinations (record exact versions resolved at install time in
+# DECISIONS.md):
+#   - macOS arm64 (M1) — smoke eval against tiny model on vLLM CPU
+#   - linux x86_64 GPU — Phase 7 paid run
+
+lm-eval>=0.4.5
+# Compatible with our vLLM transformers pin.
+transformers>=4.45,<5.0
