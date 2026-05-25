@@ -1,0 +1,33 @@
+{
+  "results": {
+    "hellaswag": {
+      "acc,none": 0.7234,
+      "acc_stderr,none": 0.0046,
+      "acc_norm,none": 0.7589,
+      "acc_norm_stderr,none": 0.0042,
+      "samples": 10042
+    },
+    "mmlu": {
+      "acc,none": 0.6812,
+      "acc_stderr,none": 0.0040,
+      "samples": 14042
+    },
+    "gsm8k": {
+      "exact_match,strict-match": 0.8245,
+      "exact_match_stderr,strict-match": 0.0105,
+      "exact_match,flexible-extract": 0.8298,
+      "samples": 1319
+    }
+  },
+  "n-shot": {
+    "hellaswag": 0,
+    "mmlu": 5,
+    "gsm8k": 5
+  },
+  "config": {
+    "model": "local-chat-completions",
+    "model_args": "model=meta-llama/Llama-3.1-8B-Instruct,base_url=http://localhost:8000/v1/chat/completions",
+    "batch_size": 4,
+    "seed": 42
+  }
+}

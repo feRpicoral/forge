@@ -1,0 +1,33 @@
+{
+  "results": {
+    "hellaswag": {
+      "acc,none": 0.7178,
+      "acc_stderr,none": 0.0047,
+      "acc_norm,none": 0.7534,
+      "acc_norm_stderr,none": 0.0043,
+      "samples": 10042
+    },
+    "mmlu": {
+      "acc,none": 0.6701,
+      "acc_stderr,none": 0.0041,
+      "samples": 14042
+    },
+    "gsm8k": {
+      "exact_match,strict-match": 0.8089,
+      "exact_match_stderr,strict-match": 0.0108,
+      "exact_match,flexible-extract": 0.8142,
+      "samples": 1319
+    }
+  },
+  "n-shot": {
+    "hellaswag": 0,
+    "mmlu": 5,
+    "gsm8k": 5
+  },
+  "config": {
+    "model": "local-chat-completions",
+    "model_args": "model=hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4,base_url=http://localhost:8000/v1/chat/completions",
+    "batch_size": 4,
+    "seed": 42
+  }
+}
