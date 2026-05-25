@@ -17,6 +17,7 @@ help:
 	@echo "  bench        Run benchmark harness (CONFIG=bench-smoke|bench-full)"
 	@echo "  eval         Run quality eval"
 	@echo "  chart        Rebuild all charts from results/"
+	@echo "  rehearse     Pre-flight rehearsal of deploy/runpod-run.sh against tiny model"
 	@echo ""
 	@echo "  docker-cpu   Build CPU vLLM image (Dockerfile.cpu) for M1 dev"
 	@echo "  docker-cuda  Build production CUDA image (Dockerfile)"
@@ -52,6 +53,9 @@ eval:
 
 chart:
 	$(PYTHON) -m scripts.chart
+
+rehearse:
+	bash deploy/runpod-run.sh --rehearsal
 
 docker-cpu:
 	docker build -f Dockerfile.cpu -t forge:cpu .
