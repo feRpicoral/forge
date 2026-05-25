@@ -1,0 +1,67 @@
+# Local M1 development stack — vLLM CPU + Prometheus + Grafana.
+#
+# Spin up with:    docker compose up -d
+# Tear down with:  docker compose down
+#
+# Note: vLLM CPU on M1 is *slow*. Use a tiny model (Qwen 0.5B, OPT-125M) — the
+# point is to validate the harness wiring, not to benchmark inference. Real
+# numbers come from the CUDA image on RunPod.
+
+services:
+  vllm-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    image: forge:cpu
+    container_name: forge-vllm-cpu
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_ID: ${MODEL_ID:-Qwen/Qwen2.5-0.5B-Instruct}
+      MAX_MODEL_LEN: ${MAX_MODEL_LEN:-2048}
+      MAX_NUM_SEQS: ${MAX_NUM_SEQS:-4}
+      SERVING_HOST: 0.0.0.0
+      SERVING_PORT: 8000
+      HF_TOKEN: ${HF_TOKEN:-}
+      HF_HOME: /app/.cache/huggingface
+    volumes:
+      - ./.cache/huggingface:/app/.cache/huggingface
+    # vLLM's first-token latency on CPU is high; give it a long startup window.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 120s
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: forge-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=1d"
+    depends_on:
+      - vllm-cpu
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: forge-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  grafana-data:
