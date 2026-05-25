@@ -1,0 +1,24 @@
+# M1 CPU smoke benchmark — validates the harness wiring against a tiny model.
+#
+# Runs in <5 minutes on M1. Numbers from this config are NOT defensible
+# benchmark results; they only exist to confirm the harness produces valid JSON
+# that the parser ingests.
+#
+# Usage:
+#   1. In one shell:  MODEL_ID=Qwen/Qwen2.5-0.5B-Instruct MAX_MODEL_LEN=1024 MAX_NUM_SEQS=4 make serve
+#   2. In another:    make bench CONFIG=bench-smoke
+
+name: smoke
+description: M1 CPU smoke against Qwen 0.5B — harness validation only.
+model: Qwen/Qwen2.5-0.5B-Instruct
+base_url: http://localhost:8000/v1
+backend: openai-chat
+dataset:
+  name: random
+  num_prompts: 8
+  extra_args:
+    random-input-len: "128"
+    random-output-len: "64"
+seed: 42
+result_dir: results/bench/smoke
+concurrency_levels: [1, 2]
