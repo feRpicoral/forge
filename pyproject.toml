@@ -24,6 +24,12 @@ dev = [
     "ruff>=0.15.14",
 ]
 
+# vLLM is intentionally NOT a managed dep — it has CUDA/torch transitives that
+# don't resolve cleanly across darwin/arm64 and linux/x86_64 in a single lock.
+# Install it explicitly per platform using the canonical constraint file:
+#   uv pip install -c constraints/serve.txt vllm
+# The Dockerfile and docs/local-dev.md both follow this pattern.
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
