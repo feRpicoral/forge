@@ -14,8 +14,8 @@
   "api": [
     {
       "label": "GPT-4o",
-      "usd_per_1m_tokens": 10.0,
-      "notes": "input $5.00/1M, output $15.00/1M, blended at 50% input."
+      "usd_per_1m_tokens": 6.25,
+      "notes": "input $2.50/1M, output $10.00/1M, blended at 50% input."
     },
     {
       "label": "GPT-4o mini",
