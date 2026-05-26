@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from forge.benchmark.config import BenchSweep, DatasetConfig
-from forge.benchmark.runner import _build_command, _normalize_base_url
+from forge.benchmark.runner import _build_command, _normalize_base_url, run_sweep
 
 
 @pytest.mark.parametrize(
@@ -91,3 +91,30 @@ def test_build_command_extra_args_underscore_converted_to_dash() -> None:
     cmd = _build_command("/vllm", sweep, concurrency=1)
     assert "--random-input-len" in cmd
     assert "--random_input_len" not in cmd
+
+
+def test_run_sweep_records_monotonic_duration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``duration_seconds`` must reflect the wall-clock cost of ``vllm bench``."""
+
+    monotonic_values = iter([100.0, 102.5, 110.0, 114.25])
+
+    def fake_monotonic() -> float:
+        return next(monotonic_values)
+
+    class _FakeProc:
+        def __init__(self) -> None:
+            self.returncode = 0
+
+    def fake_run(cmd: list[str], check: bool = False) -> _FakeProc:
+        return _FakeProc()
+
+    monkeypatch.setattr("forge.benchmark.runner.time.monotonic", fake_monotonic)
+    monkeypatch.setattr("forge.benchmark.runner.subprocess.run", fake_run)
+
+    outcomes = run_sweep(_sweep(result_dir=tmp_path), vllm_executable="/fake/vllm")
+
+    assert [o.concurrency for o in outcomes] == [1, 2]
+    assert outcomes[0].duration_seconds == pytest.approx(2.5)
+    assert outcomes[1].duration_seconds == pytest.approx(4.25)
