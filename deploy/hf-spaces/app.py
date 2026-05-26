@@ -35,50 +35,104 @@ REPO_URL = "https://github.com/feRpicoral/forge"
 
 @dataclass
 class StreamMetrics:
-    """Token-by-token timing captured during a single completion."""
+    """Chunk-level timing captured during a single streaming completion.
+
+    OpenAI-compatible streaming chunks aren't guaranteed to be one token each —
+    a chunk can carry partial text or several tokens depending on how the
+    server batches its SSE writes. Real token counts come from the optional
+    ``usage`` payload at end-of-stream; until that arrives we report
+    chunk-level numbers and label them as such.
+    """
 
     request_started_at: float
-    first_token_at: float | None = None
-    last_token_at: float | None = None
-    output_tokens: int = 0
-    token_arrival_times: list[float] = field(default_factory=list)
+    first_chunk_at: float | None = None
+    last_chunk_at: float | None = None
+    output_chunks: int = 0
+    chunk_arrival_times: list[float] = field(default_factory=list)
+    completion_tokens: int | None = None  # populated from final usage chunk if available
 
     @property
     def ttft_ms(self) -> float | None:
-        if self.first_token_at is None:
+        """Time to first streamed content chunk. Proxies token-level TTFT — the
+        first chunk carries at least one token, so this is an upper bound."""
+        if self.first_chunk_at is None:
             return None
-        return (self.first_token_at - self.request_started_at) * 1000.0
+        return (self.first_chunk_at - self.request_started_at) * 1000.0
+
+    @property
+    def mean_chunk_interval_ms(self) -> float | None:
+        if self.first_chunk_at is None or self.last_chunk_at is None or self.output_chunks < 2:
+            return None
+        decode_seconds = self.last_chunk_at - self.first_chunk_at
+        return (decode_seconds / max(self.output_chunks - 1, 1)) * 1000.0
+
+    @property
+    def chunks_per_second(self) -> float | None:
+        if self.first_chunk_at is None or self.last_chunk_at is None:
+            return None
+        decode_seconds = self.last_chunk_at - self.first_chunk_at
+        if decode_seconds <= 0:
+            return None
+        return (self.output_chunks - 1) / decode_seconds
 
     @property
     def mean_tpot_ms(self) -> float | None:
-        if self.first_token_at is None or self.last_token_at is None or self.output_tokens < 2:
+        """Real per-token decode latency. Available only after usage arrives."""
+        if (
+            self.first_chunk_at is None
+            or self.last_chunk_at is None
+            or self.completion_tokens is None
+            or self.completion_tokens < 2
+        ):
             return None
-        decode_seconds = self.last_token_at - self.first_token_at
-        return (decode_seconds / max(self.output_tokens - 1, 1)) * 1000.0
+        decode_seconds = self.last_chunk_at - self.first_chunk_at
+        return (decode_seconds / (self.completion_tokens - 1)) * 1000.0
 
     @property
     def tokens_per_second(self) -> float | None:
-        if self.first_token_at is None or self.last_token_at is None:
+        if (
+            self.first_chunk_at is None
+            or self.last_chunk_at is None
+            or self.completion_tokens is None
+        ):
             return None
-        decode_seconds = self.last_token_at - self.first_token_at
+        decode_seconds = self.last_chunk_at - self.first_chunk_at
         if decode_seconds <= 0:
             return None
-        return (self.output_tokens - 1) / decode_seconds
+        return (self.completion_tokens - 1) / decode_seconds
 
     def format(self) -> str:
+        if self.completion_tokens is not None:
+            token_rows = [
+                f"**Output tokens**: {self.completion_tokens}",
+                (
+                    f"**Mean TPOT**: {self.mean_tpot_ms:.1f} ms"
+                    if self.mean_tpot_ms is not None
+                    else "**Mean TPOT**: …"
+                ),
+                (
+                    f"**Tokens / sec (decode)**: {self.tokens_per_second:.1f}"
+                    if self.tokens_per_second is not None
+                    else "**Tokens / sec (decode)**: …"
+                ),
+            ]
+        else:
+            token_rows = [
+                f"**Streamed chunks**: {self.output_chunks}",
+                (
+                    f"**Mean inter-chunk latency**: {self.mean_chunk_interval_ms:.1f} ms"
+                    if self.mean_chunk_interval_ms is not None
+                    else "**Mean inter-chunk latency**: …"
+                ),
+                (
+                    f"**Chunks / sec (decode)**: {self.chunks_per_second:.1f}"
+                    if self.chunks_per_second is not None
+                    else "**Chunks / sec (decode)**: …"
+                ),
+            ]
         rows = [
             f"**TTFT**: {self.ttft_ms:.0f} ms" if self.ttft_ms is not None else "**TTFT**: …",
-            (
-                f"**Mean TPOT**: {self.mean_tpot_ms:.1f} ms"
-                if self.mean_tpot_ms is not None
-                else "**Mean TPOT**: …"
-            ),
-            f"**Output tokens**: {self.output_tokens}",
-            (
-                f"**Tokens / sec (decode)**: {self.tokens_per_second:.1f}"
-                if self.tokens_per_second is not None
-                else "**Tokens / sec (decode)**: …"
-            ),
+            *token_rows,
         ]
         return "  \n".join(rows)
 
@@ -123,6 +177,10 @@ def stream_completion(
             max_tokens=max_tokens,
             temperature=temperature,
             stream=True,
+            # vLLM honors include_usage; older servers ignore it gracefully. The
+            # final chunk carries real prompt/completion token counts which we
+            # use to switch from chunk-level to token-level metrics in the UI.
+            stream_options={"include_usage": True},
         )
     except Exception as exc:
         # Surface any network or API error to the user as readable Markdown.
@@ -135,21 +193,29 @@ def stream_completion(
 
     buffer: list[str] = []
     for chunk in response:
+        usage = getattr(chunk, "usage", None)
+        if usage is not None:
+            metrics.completion_tokens = getattr(usage, "completion_tokens", None)
+
         delta = chunk.choices[0].delta if chunk.choices else None
         content = getattr(delta, "content", None) if delta is not None else None
         if not content:
             continue
 
         now = time.monotonic()
-        if metrics.first_token_at is None:
-            metrics.first_token_at = now
-        metrics.last_token_at = now
-        metrics.output_tokens += 1
-        metrics.token_arrival_times.append(now)
+        if metrics.first_chunk_at is None:
+            metrics.first_chunk_at = now
+        metrics.last_chunk_at = now
+        metrics.output_chunks += 1
+        metrics.chunk_arrival_times.append(now)
         buffer.append(content)
         yield "".join(buffer), metrics.format()
 
-    if not buffer:
+    # If the final usage chunk arrived after the last content chunk, the
+    # display still reads chunk-level numbers — re-emit with token metrics now.
+    if metrics.completion_tokens is not None:
+        yield "".join(buffer) if buffer else "_(no content)_", metrics.format()
+    elif not buffer:
         yield "_(no content)_", metrics.format()
 
 
@@ -175,7 +241,12 @@ def build_interface() -> gr.Blocks:
                 completion = gr.Markdown(label="Completion", value="_(awaiting prompt)_")
                 metrics = gr.Markdown(
                     label="Live metrics",
-                    value="**TTFT**: …  \n**Mean TPOT**: …  \n**Output tokens**: 0  \n**Tokens / sec (decode)**: …",
+                    value=(
+                        "**TTFT**: …  \n"
+                        "**Streamed chunks**: 0  \n"
+                        "**Mean inter-chunk latency**: …  \n"
+                        "**Chunks / sec (decode)**: …"
+                    ),
                 )
 
         submit.click(
@@ -187,6 +258,9 @@ def build_interface() -> gr.Blocks:
         gr.Markdown(
             f"---\n"
             f"Endpoint: `{OPENAI_BASE_URL}` — metrics are wall-clock client-side. "
+            f"During streaming we report **chunk-level** numbers (OpenAI SSE chunks "
+            f"aren't guaranteed to be one token); when the endpoint returns a final "
+            f"`usage` block the display switches to real token counts and TPOT. "
             f"For full reproducibility (hardware, model SHA, vLLM version) see the [repo]({REPO_URL})."
         )
 
