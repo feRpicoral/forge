@@ -7,9 +7,9 @@ chart pipeline. Every cost-comparison plot in the README must cite the date
 these numbers were collected.
 
 Sources:
-- RunPod community tier pricing: https://runpod.io/pricing (as of 2026-05-25)
-- OpenAI API pricing:            https://openai.com/api/pricing (as of 2026-05-25)
-- Anthropic Claude API pricing:  https://www.anthropic.com/pricing (as of 2026-05-25)
+- RunPod community tier pricing: https://runpod.io/pricing (as of 2026-05-26)
+- OpenAI API pricing:            https://openai.com/api/pricing (as of 2026-05-26)
+- Anthropic Claude API pricing:  https://www.anthropic.com/pricing (as of 2026-05-26)
 """
 
 from __future__ import annotations
@@ -74,10 +74,10 @@ GPU_TIERS: dict[str, GpuTier] = {
 }
 
 
-# Approximate commercial API pricing as of 2026-05-25. Update the numbers AND
+# Approximate commercial API pricing as of 2026-05-26. Update the numbers AND
 # the source links above when refreshing.
 API_PRICING: dict[str, ApiPricing] = {
-    "gpt-4o": ApiPricing(name="GPT-4o", input_usd_per_1m=5.00, output_usd_per_1m=15.00),
+    "gpt-4o": ApiPricing(name="GPT-4o", input_usd_per_1m=2.50, output_usd_per_1m=10.00),
     "gpt-4o-mini": ApiPricing(name="GPT-4o mini", input_usd_per_1m=0.15, output_usd_per_1m=0.60),
     "claude-sonnet-4-6": ApiPricing(
         name="Claude Sonnet 4.6", input_usd_per_1m=3.00, output_usd_per_1m=15.00
