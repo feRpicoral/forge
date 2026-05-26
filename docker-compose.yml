@@ -58,8 +58,12 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
     volumes:
+      # Keep the dashboard JSONs out of /etc/grafana/provisioning/dashboards —
+      # that path holds the provider YAML and a second bind mount there masks
+      # it, so the dashboard never loads. Mount the JSONs under /var/lib and
+      # point the provider's options.path at that location instead.
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     depends_on:
       - prometheus
