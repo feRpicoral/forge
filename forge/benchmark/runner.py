@@ -10,6 +10,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -51,12 +52,13 @@ def run_sweep(sweep: BenchSweep, *, vllm_executable: str | None = None) -> list[
         print(f"[forge] bench c={concurrency} → {result_path}", file=sys.stderr)
         print(f"[forge] exec: {' '.join(cmd)}", file=sys.stderr)
 
+        started_at = time.monotonic()
         proc = subprocess.run(cmd, check=False)
         outcomes.append(
             RunOutcome(
                 concurrency=concurrency,
                 result_path=result_path,
-                duration_seconds=0.0,
+                duration_seconds=time.monotonic() - started_at,
                 returncode=proc.returncode,
             )
         )
