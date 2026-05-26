@@ -100,13 +100,18 @@ def test_to_dict_round_trips_through_json() -> None:
     assert "per_task" in encoded
 
 
-def test_extract_score_finds_keys_with_filter_suffix(tmp_path: Path) -> None:
-    """lm-eval uses ``metric,filter`` keys; parser must find the metric by prefix."""
+def test_extract_score_prefers_strict_match_for_gsm8k(tmp_path: Path) -> None:
+    """GSM8K must always pick ``strict-match`` regardless of dict key order.
+
+    lm-eval emits both ``exact_match,strict-match`` and
+    ``exact_match,flexible-extract``. The retention chart must not flip between
+    them because the JSON happened to serialize one key first.
+    """
     payload = {
         "results": {
             "gsm8k": {
-                "exact_match,strict-match": 0.9,
                 "exact_match,flexible-extract": 0.95,
+                "exact_match,strict-match": 0.9,
             }
         }
     }
@@ -114,5 +119,37 @@ def test_extract_score_finds_keys_with_filter_suffix(tmp_path: Path) -> None:
     path.write_text(json.dumps(payload), encoding="utf-8")
     rows = parse_lm_eval_output(path)
     assert len(rows) == 1
-    # Strict-match comes first in the dict; the parser picks the first match.
     assert rows[0].score == pytest.approx(0.9)
+
+
+def test_extract_score_falls_back_to_flexible_extract(tmp_path: Path) -> None:
+    """If only ``flexible-extract`` is present, it's used as a fallback."""
+    payload = {
+        "results": {
+            "gsm8k": {
+                "exact_match,flexible-extract": 0.77,
+            }
+        }
+    }
+    path = tmp_path / "x.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    rows = parse_lm_eval_output(path)
+    assert len(rows) == 1
+    assert rows[0].score == pytest.approx(0.77)
+
+
+def test_extract_score_ignores_unfiltered_keys(tmp_path: Path) -> None:
+    """Bare ``acc`` (without the ``,filter`` suffix) is not an accepted key.
+
+    lm-eval always emits ``<metric>,<filter>``; defending against the bare form
+    would mask schema drift. If lm-eval ever stops emitting the comma form, we
+    want that failure to be loud.
+    """
+    payload = {
+        "results": {
+            "mmlu": {"acc": 0.55},
+        }
+    }
+    path = tmp_path / "x.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    assert parse_lm_eval_output(path) == []

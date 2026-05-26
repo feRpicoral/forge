@@ -2,8 +2,8 @@
 
 lm-eval writes a JSON with a ``results`` mapping (task → metric → value). We
 extract the canonical metric per task (``acc_norm`` for HellaSwag, ``acc`` for
-MMLU/GSM8K) and produce a ``QualityDelta`` summarizing the percentage-point
-retention against the baseline.
+MMLU, ``exact_match,strict-match`` for GSM8K) and produce a ``QualityDelta``
+summarizing the percentage-point retention against the baseline.
 
 The aggregate retention is reported as a simple mean across tasks. A weighted
 aggregate (by sample count or task importance) is a future improvement — the
@@ -16,12 +16,31 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-# Canonical metric per task. lm-eval emits multiple metrics per task; this is the
-# one we treat as primary in the README's quantization-retention chart.
-_PRIMARY_METRIC = {
-    "mmlu": "acc",
-    "gsm8k": "exact_match",
-    "hellaswag": "acc_norm",
+
+@dataclass(frozen=True)
+class _MetricSpec:
+    """Canonical metric for a task, plus the ordered keys to look for in lm-eval JSON.
+
+    lm-eval emits metric keys as ``<metric>,<filter>`` (e.g. ``acc,none``,
+    ``exact_match,strict-match``). ``accepted_keys`` lists every key we accept,
+    in preference order, so a dict-iteration-order flip in lm-eval's output
+    can't silently switch which score lands in the retention chart.
+    """
+
+    name: str
+    accepted_keys: tuple[str, ...]
+
+
+# Canonical metric per task. GSM8K's ``strict-match`` is preferred over
+# ``flexible-extract`` because the strict filter is the conservative number we
+# cite in the methodology section.
+_PRIMARY_METRIC: dict[str, _MetricSpec] = {
+    "mmlu": _MetricSpec(name="acc", accepted_keys=("acc,none",)),
+    "gsm8k": _MetricSpec(
+        name="exact_match",
+        accepted_keys=("exact_match,strict-match", "exact_match,flexible-extract"),
+    ),
+    "hellaswag": _MetricSpec(name="acc_norm", accepted_keys=("acc_norm,none",)),
 }
 
 
@@ -90,19 +109,19 @@ def parse_lm_eval_output(path: Path) -> list[TaskResult]:
         raise KeyError(f"{path}: missing 'results' object")
 
     out: list[TaskResult] = []
-    for task, primary in _PRIMARY_METRIC.items():
+    for task, spec in _PRIMARY_METRIC.items():
         if task not in results:
             continue
         task_data = results[task]
         if not isinstance(task_data, dict):
             continue
-        score = _extract_score(task_data, primary)
+        score = _extract_score(task_data, spec)
         if score is None:
             continue
         out.append(
             TaskResult(
                 task=task,
-                metric=primary,
+                metric=spec.name,
                 score=score,
                 samples=_extract_samples(task_data),
             )
@@ -159,15 +178,17 @@ def compute_deltas(
     )
 
 
-def _extract_score(task_data: dict[str, object], metric_prefix: str) -> float | None:
-    """lm-eval keys metrics as ``<metric>,<filter>`` (e.g. ``acc,none``).
+def _extract_score(task_data: dict[str, object], spec: _MetricSpec) -> float | None:
+    """Return the first accepted-key score, walking ``spec.accepted_keys`` in order.
 
-    We match by prefix so ``acc`` finds ``acc,none`` and ``exact_match`` finds
-    ``exact_match,strict-match``. Returns the first matching numeric value.
+    Iterating the spec's ordered keys (rather than the JSON's key order) is the
+    whole point: lm-eval can emit several keys for the same metric (e.g.
+    GSM8K's ``strict-match`` and ``flexible-extract``), and we want a
+    deterministic choice regardless of dict ordering.
     """
-    for key, value in task_data.items():
-        is_match = key == metric_prefix or key.startswith(f"{metric_prefix},")
-        if is_match and isinstance(value, int | float) and not isinstance(value, bool):
+    for key in spec.accepted_keys:
+        value = task_data.get(key)
+        if isinstance(value, int | float) and not isinstance(value, bool):
             return float(value)
     return None
 
