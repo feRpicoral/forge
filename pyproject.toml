@@ -8,6 +8,7 @@ authors = [{ name = "Fernando Picoral", email = "fernandopicoral@gmail.com" }]
 license = { text = "MIT" }
 dependencies = [
     "gradio>=6.14.0",
+    "huggingface-hub<1.0",
     "matplotlib>=3.10.9",
     "openai>=2.38.0",
     "pyyaml>=6.0.3",

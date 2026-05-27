@@ -52,7 +52,7 @@ emoji: ⚡
 colorFrom: blue
 colorTo: orange
 sdk: gradio
-sdk_version: "5.0.0"
+sdk_version: "6.14.0"
 app_file: app.py
 pinned: false
 license: mit
@@ -64,7 +64,7 @@ license: mit
 The Space's `requirements.txt` needs:
 
 ```
-gradio>=5.0
+gradio>=6.14.0
 openai>=1.50
 ```
 

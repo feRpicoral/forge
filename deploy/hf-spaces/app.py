@@ -216,7 +216,7 @@ def stream_completion(
 
 
 def build_interface() -> gr.Blocks:
-    with gr.Blocks(title="Forge — Live LLM Latency", theme=gr.themes.Soft()) as demo:
+    with gr.Blocks(title="Forge — Live LLM Latency") as demo:
         gr.Markdown(
             "# Forge — Live LLM Latency Demo\n\n"
             "Send a prompt and watch the response stream token by token, with TTFT, "
@@ -264,4 +264,8 @@ def build_interface() -> gr.Blocks:
 
 
 if __name__ == "__main__":
-    build_interface().launch(server_name="0.0.0.0", server_port=7860)
+    build_interface().launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+        theme=gr.themes.Soft(),
+    )
