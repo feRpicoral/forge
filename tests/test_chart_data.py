@@ -60,7 +60,6 @@ def test_ttft_chart_writes_png_and_svg(tmp_path: Path) -> None:
     )
     assert paths.png.exists()
     assert paths.svg.exists()
-    # Default stem ends with the metric name.
     assert "ttft" in paths.png.name
 
 

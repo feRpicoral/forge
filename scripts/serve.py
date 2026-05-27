@@ -40,7 +40,6 @@ def main(argv: list[str] | None = None) -> int:
         Path(config.hf_home).mkdir(parents=True, exist_ok=True)
         os.environ["HF_HOME"] = config.hf_home
 
-    # ``execvp`` replaces the current process. Anything below this line never runs.
     os.execvp(command[0], command)
 
 

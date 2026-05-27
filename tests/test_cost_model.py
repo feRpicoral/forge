@@ -146,7 +146,6 @@ def test_compare_bundles_self_hosted_and_api() -> None:
     labels_api = [r.label for r in cmp.api]
     assert "GPT-4o" in labels_api
     assert "Claude Sonnet 4.6" in labels_api
-    # Self-hosted should be substantially cheaper than GPT-4o in this scenario.
     gpt = next(r for r in cmp.api if r.label == "GPT-4o")
     assert cmp.self_hosted[0].usd_per_1m_tokens < gpt.usd_per_1m_tokens / 100
 

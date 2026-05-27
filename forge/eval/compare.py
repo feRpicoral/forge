@@ -153,7 +153,7 @@ def compute_deltas(
         b = baseline_by_task[task]
         c = candidate_by_task[task]
         if b.score == 0:
-            continue  # avoid division by zero; skip and note
+            continue
         retention = (c.score / b.score) * 100.0
         per_task.append(
             TaskDelta(

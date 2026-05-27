@@ -72,13 +72,12 @@ def test_parse_dataset_name_missing_falls_back_to_unknown() -> None:
 
 def test_parse_source_path_recorded() -> None:
     row = parse_result(FIXTURE_DIR / "bench-c0002.json", concurrency=2)
-    assert "bench-c0002.json" in row.source_path  # records the input file path
+    assert "bench-c0002.json" in row.source_path
 
 
 def test_to_dict_is_serializable() -> None:
     row = parse_result(FIXTURE_DIR / "bench-c0002.json", concurrency=2)
     payload = row.to_dict()
-    # If json.dumps fails, the parser produced something un-JSON-able — guard it.
     json.dumps(payload)
     assert payload["model"] == "Qwen/Qwen2.5-0.5B-Instruct"
     assert payload["concurrency"] == 2

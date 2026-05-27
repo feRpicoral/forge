@@ -51,7 +51,7 @@ def test_from_env_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
     config = ServingConfig.from_env()
 
     assert config.model_id == "meta-llama/Llama-3.1-8B-Instruct"
-    assert config.quantization == "awq"  # case-normalized
+    assert config.quantization == "awq"
     assert config.max_model_len == 8192
     assert config.max_num_seqs == 64
     assert config.port == 8888
@@ -97,7 +97,6 @@ def test_to_vllm_args_baseline() -> None:
     assert args[0:3] == ["vllm", "serve", "Qwen/Qwen2.5-0.5B-Instruct"]
     assert "--max-model-len" in args
     assert "2048" in args
-    # No quantization or kv_cache_dtype flags when set to defaults — they should be absent.
     assert "--quantization" not in args
     assert "--kv-cache-dtype" not in args
 

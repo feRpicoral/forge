@@ -111,7 +111,6 @@ echo "[runpod-run] bench=$BENCH_CONFIG eval=$EVAL_CONFIG"
 echo "[runpod-run] server_log=$SERVER_LOG"
 echo ""
 
-# Start vLLM in the background.
 echo "[runpod-run] starting vllm…"
 MODEL_ID="$MODEL_ID" \
     QUANTIZATION="$QUANTIZATION" \
@@ -123,7 +122,6 @@ MODEL_ID="$MODEL_ID" \
 SERVER_PID=$!
 echo "[runpod-run] vllm pid=$SERVER_PID"
 
-# Wait for /health.
 echo "[runpod-run] waiting for /health (timeout ${SERVER_READY_TIMEOUT}s)…"
 SECONDS=0
 until curl -sf "http://localhost:${SERVER_PORT}/health" > /dev/null 2>&1; do
@@ -141,12 +139,10 @@ until curl -sf "http://localhost:${SERVER_PORT}/health" > /dev/null 2>&1; do
 done
 echo "[runpod-run] /health is up after ${SECONDS}s"
 
-# Benchmark.
 echo ""
 echo "[runpod-run] benchmark sweep…"
 uv run python -m scripts.bench --config "$BENCH_CONFIG"
 
-# Quality eval (skippable for fast iteration).
 if (( SKIP_EVAL == 0 )); then
     echo ""
     echo "[runpod-run] quality eval…"

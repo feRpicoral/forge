@@ -24,7 +24,7 @@ def test_from_values_single_value() -> None:
 
 
 def test_from_values_typical_distribution() -> None:
-    values = list(range(1, 101))  # 1..100
+    values = list(range(1, 101))
     summary = LengthSummary.from_values(values)
     assert summary is not None
     assert summary.count == 100
