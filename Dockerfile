@@ -27,13 +27,17 @@ COPY scripts/ ./scripts/
 COPY configs/ ./configs/
 COPY constraints/ ./constraints/
 
-# Install Forge + the small runtime deps from pyproject (pyyaml, matplotlib,
-# etc.) into the base image's Python. ``--system`` avoids creating a second
-# venv that would re-download vllm + xformers + the nvidia/* wheels — the
-# base image already owns all of those.
-# Then enforce the transformers pin via the constraint file. No-op when the
-# base image's transformers already satisfies it.
-RUN uv pip install --system . \
+# Install locked runtime deps into the base image's Python, then add Forge
+# without re-resolving dependencies. The base image already owns vLLM/CUDA.
+RUN uv export --quiet \
+      --frozen \
+      --no-dev \
+      --no-emit-project \
+      --format requirements.txt \
+      --output-file /tmp/forge-requirements.txt \
+ && uv pip install --system -r /tmp/forge-requirements.txt \
+ && rm /tmp/forge-requirements.txt \
+ && uv pip install --system --no-deps . \
  && uv pip install --system -c constraints/serve.txt transformers
 
 EXPOSE 8000
