@@ -1,4 +1,4 @@
-.PHONY: help install lint format typecheck test check clean serve bench eval chart docker-cpu docker-cuda
+.PHONY: help install lint format typecheck test check clean serve bench eval chart docker-cpu docker-cuda doctor rehearse
 
 PYTHON := uv run python
 CONFIG ?= bench-smoke
@@ -18,6 +18,7 @@ help:
 	@echo "  eval         Run quality eval"
 	@echo "  chart        Rebuild all charts from results/"
 	@echo "  rehearse     Pre-flight rehearsal of deploy/runpod-run.sh against tiny model"
+	@echo "  doctor       Diagnose venv drift (vllm + transformers + huggingface-hub pins)"
 	@echo ""
 	@echo "  docker-cpu   Build CPU vLLM image (Dockerfile.cpu) for M1 dev"
 	@echo "  docker-cuda  Build production CUDA image (Dockerfile)"
@@ -56,6 +57,9 @@ chart:
 
 rehearse:
 	bash deploy/runpod-run.sh --rehearsal
+
+doctor:
+	$(PYTHON) -m scripts.doctor
 
 docker-cpu:
 	docker build -f Dockerfile.cpu -t forge:cpu .
