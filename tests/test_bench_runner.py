@@ -51,7 +51,6 @@ def test_build_command_minimal() -> None:
     assert cmd[1:3] == ["bench", "serve"]
     assert "--backend" in cmd
     assert cmd[cmd.index("--backend") + 1] == "openai-chat"
-    # /v1 stripped from base URL.
     assert cmd[cmd.index("--base-url") + 1] == "http://localhost:8000"
     assert cmd[cmd.index("--endpoint") + 1] == "/v1/chat/completions"
     assert cmd[cmd.index("--max-concurrency") + 1] == "4"

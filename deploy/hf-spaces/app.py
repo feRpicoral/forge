@@ -26,10 +26,9 @@ from dataclasses import dataclass, field
 import gradio as gr
 from openai import OpenAI
 
-# Read at module load so the Space's env block is the single source of truth.
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:8000/v1")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "not-used-by-vllm")
-MODEL_ID = os.environ.get("MODEL_ID", "")  # autodetect from /v1/models if empty
+MODEL_ID = os.environ.get("MODEL_ID", "")
 REPO_URL = "https://github.com/feRpicoral/forge"
 
 
@@ -49,7 +48,7 @@ class StreamMetrics:
     last_chunk_at: float | None = None
     output_chunks: int = 0
     chunk_arrival_times: list[float] = field(default_factory=list)
-    completion_tokens: int | None = None  # populated from final usage chunk if available
+    completion_tokens: int | None = None
 
     @property
     def ttft_ms(self) -> float | None:
@@ -143,8 +142,6 @@ def _resolve_model_id(client: OpenAI) -> str:
     try:
         models = client.models.list().data
     except Exception:
-        # Network surface — fall back to an empty string so the UI can show a
-        # helpful error rather than crashing.
         return ""
     if not models:
         return ""
@@ -183,7 +180,6 @@ def stream_completion(
             stream_options={"include_usage": True},
         )
     except Exception as exc:
-        # Surface any network or API error to the user as readable Markdown.
         yield (
             "",
             f"**error**: {type(exc).__name__}: {exc}\n\n"

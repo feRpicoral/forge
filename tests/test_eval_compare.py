@@ -22,7 +22,6 @@ def test_parse_extracts_canonical_metrics() -> None:
 
     by_task = {r.task: r for r in rows}
     assert set(by_task) == {"hellaswag", "mmlu", "gsm8k"}
-    # HellaSwag uses acc_norm, MMLU uses acc, GSM8K uses exact_match.
     assert by_task["hellaswag"].metric == "acc_norm"
     assert by_task["hellaswag"].score == pytest.approx(0.7589)
     assert by_task["mmlu"].metric == "acc"
@@ -62,9 +61,7 @@ def test_compute_deltas_against_real_fixtures() -> None:
     assert delta.baseline_label == "bf16"
     assert delta.candidate_label == "awq"
     assert {d.task for d in delta.per_task} == {"hellaswag", "mmlu", "gsm8k"}
-    # AWQ should retain ~98%+ across the board on Llama 3.1 8B.
     assert 97.0 <= delta.mean_retention_pct <= 100.0
-    # Each task is < 100 (slight loss expected).
     for per in delta.per_task:
         assert per.retention_pct < 100.0
 
@@ -84,7 +81,6 @@ def test_compute_deltas_skips_zero_baseline() -> None:
     baseline = [TaskResult(task="mmlu", metric="acc", score=0.0)]
     candidate = [TaskResult(task="mmlu", metric="acc", score=0.1)]
     delta = compute_deltas(baseline, candidate)
-    # division-by-zero defenders skip, leaving the per-task list empty.
     assert delta.per_task == []
     assert delta.mean_retention_pct == 0.0
 
@@ -94,7 +90,6 @@ def test_to_dict_round_trips_through_json() -> None:
     candidate = parse_lm_eval_output(FIXTURE_DIR / "eval-awq.json")
     delta = compute_deltas(baseline, candidate)
     payload = delta.to_dict()
-    # No round-trip via from_dict — just ensure serialization is clean.
     encoded = json.dumps(payload)
     assert "mean_retention_pct" in encoded
     assert "per_task" in encoded

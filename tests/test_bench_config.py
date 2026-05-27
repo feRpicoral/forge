@@ -41,7 +41,7 @@ def test_load_minimal_sweep(tmp_path: Path) -> None:
         model="Qwen/Qwen2.5-0.5B-Instruct",
         base_url="http://localhost:8000/v1",
         backend="openai-chat",
-        dataset=sweep.dataset,  # compared below to avoid frozen-dataclass dance
+        dataset=sweep.dataset,
         seed=42,
         result_dir=Path("results/bench/smoke"),
         concurrency_levels=[1, 2, 4],
@@ -103,8 +103,6 @@ def test_rejects_missing_top_level(tmp_path: Path) -> None:
         description: x
         """,
     )
-    # The first required field checked is `dataset`. Any of the other missing
-    # fields would also raise — we just need *some* clear error.
     with pytest.raises(TypeError, match="'dataset'"):
         load_sweep(path)
 

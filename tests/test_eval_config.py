@@ -120,4 +120,4 @@ def test_result_path_includes_variant() -> None:
 def test_real_configs_parse() -> None:
     for cfg in ("eval-smoke.yaml", "eval-full-bf16.yaml", "eval-full-awq.yaml"):
         suite = load_suite(Path("configs") / cfg)
-        assert suite.tasks  # non-empty
+        assert suite.tasks

@@ -76,11 +76,11 @@ def plot_latency_vs_concurrency(
     output_dir: Path,
     stem: str | None = None,
 ) -> ChartPaths:
-    """Latency-distribution chart: TTFT or TPOT, p50 and p95 per series.
+    """Latency-distribution chart: TTFT or TPOT, p50 and p99 per series.
 
     ``metric`` is ``"ttft"`` or ``"tpot"``; selects which ``LatencyDistribution``
     on the rows to plot. Both percentiles are drawn per series: solid = p50,
-    dashed = p95.
+    dashed = p99.
     """
     if metric not in ("ttft", "tpot"):
         raise ValueError(f"metric must be 'ttft' or 'tpot', got {metric!r}")
@@ -94,9 +94,9 @@ def plot_latency_vs_concurrency(
         xs = [r.concurrency for r in rows]
         latencies = [getattr(r, metric) for r in rows]
         p50 = [latency.median_ms for latency in latencies]
-        p95 = [latency.p99_ms for latency in latencies]  # vLLM emits p99, not p95.
+        p99 = [latency.p99_ms for latency in latencies]
         ax.plot(xs, p50, marker="o", color=color, label=f"{label.upper()} p50")
-        ax.plot(xs, p95, marker="s", linestyle="--", color=color, label=f"{label.upper()} p99")
+        ax.plot(xs, p99, marker="s", linestyle="--", color=color, label=f"{label.upper()} p99")
 
     metric_display = "TTFT" if metric == "ttft" else "TPOT"
     ax.set_xlabel("Concurrent requests")
@@ -140,11 +140,9 @@ def plot_cost_comparison(
     ax.set_xlabel("USD per 1M tokens (lower is cheaper)")
     ax.set_title("Cost per 1M tokens — self-hosted vs. commercial APIs")
 
-    # Annotate every bar with its dollar value.
     for y, value in zip(y_positions, values, strict=True):
         ax.text(value, y, f"  ${value:,.2f}", va="center", fontsize=10)
 
-    # Divider between self-hosted block and API block.
     if 0 < sh_count < len(rows):
         ax.axhline(sh_count - 0.5, color=colors["muted"], linewidth=0.8, linestyle=":")
 
@@ -167,7 +165,6 @@ def plot_quality_retention(
 
     bars = ax.bar(labels, retentions, color=colors["awq"], edgecolor="white", width=0.55)
 
-    # Reference line at 100% (the baseline).
     ax.axhline(100.0, color=colors["baseline"], linestyle="--", linewidth=1.2)
     ax.text(
         len(labels) - 0.5,
@@ -179,7 +176,6 @@ def plot_quality_retention(
         color=colors["baseline"],
     )
 
-    # Annotate each bar with its retention %.
     for bar, value in zip(bars, retentions, strict=True):
         ax.text(
             bar.get_x() + bar.get_width() / 2.0,
