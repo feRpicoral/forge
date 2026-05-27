@@ -59,7 +59,7 @@ rehearse:
 	bash deploy/runpod-run.sh --rehearsal
 
 doctor:
-	$(PYTHON) -m scripts.doctor
+	uv run --no-sync python -m scripts.doctor
 
 docker-cpu:
 	docker build -f Dockerfile.cpu -t forge:cpu .
