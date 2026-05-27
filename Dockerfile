@@ -5,10 +5,6 @@
 # transformers pin from constraints/serve.txt. We deliberately do NOT
 # create a second uv-managed venv — that would re-download the entire
 # CUDA stack (~3 GB) on every build and is fragile to network blips.
-#
-# Tag is intentionally floating to `latest` during development; before the
-# Phase 7 paid run, this gets pinned to a specific vLLM release and the SHA
-# is recorded in DECISIONS.md.
 
 FROM vllm/vllm-openai:latest
 

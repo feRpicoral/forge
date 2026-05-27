@@ -216,9 +216,6 @@ def stream_completion(
 
 
 def build_interface() -> gr.Blocks:
-    # Gradio 6.0 moved ``theme=`` off ``Blocks()`` onto ``launch()``. Keep both
-    # call sites in sync — the ``__main__`` block at the bottom passes the same
-    # theme to launch.
     with gr.Blocks(title="Forge — Live LLM Latency") as demo:
         gr.Markdown(
             "# Forge — Live LLM Latency Demo\n\n"
