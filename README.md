@@ -1,10 +1,10 @@
 # Forge
 
+> ⚠️ **The numbers in this README are fictional placeholders, pending the actual benchmark run.** The chart pipeline and methodology are real; the *values* in the charts are plausible Llama 3.1 8B/4090 estimates. Real measurements from the RunPod RTX 4090 run will replace them wholesale.
+
 > **Self-host Llama 3.1 8B Instruct on a single $0.34/hr RTX 4090, serve it at ~5,200 generation tokens/sec, and pay ~$0.009 per 1M tokens — roughly **680× cheaper than GPT-4o** while retaining ~98% of full-precision quality.**
 
 Forge is a focused engineering artifact, not a SaaS. It serves an open-source LLM with a production-grade stack (vLLM + AWQ-INT4 + Marlin kernels), benchmarks it under realistic concurrency, evaluates quantization quality on standard tasks, and traces every dollar in the cost comparison back to a measured throughput number.
-
-> ⚠️ **Numbers in this README are illustrative pending the Phase 7 paid benchmark run.** The chart pipeline and methodology are real; the *values* in the charts are plausible Llama 3.1 8B/4090 estimates. Real measurements from the RunPod RTX 4090 run replace them wholesale and the README is updated in a single commit. See [`DECISIONS.md`](./DECISIONS.md) for the current run status.
 
 ## The picture
 
@@ -46,43 +46,28 @@ This repo answers one question rigorously: *"Should I self-host an open-source L
 
 ## Architecture
 
-```
-                         ┌────────────────────────────┐
-                         │   ShareGPT trace (load)    │
-                         └─────────────┬──────────────┘
-                                       │
-                                       ▼
-┌──────────────────┐         ┌─────────────────────┐         ┌───────────────────┐
-│  scripts/bench   │ ──────▶ │  vllm bench serve   │ ──────▶ │  results/bench/   │
-└──────────────────┘         │   (concurrency      │         │   *.json          │
-                             │    sweep)           │         └──────────┬────────┘
-                             └─────────┬───────────┘                    │
-                                       │                                ▼
-                              vLLM OpenAI-compat                ┌───────────────┐
-                              /v1/chat/completions             │ forge.benchmark│
-                              /v1/completions                  │ .metrics       │
-                                       ▲                       └──────┬────────┘
-                                       │                              │
-              ┌────────────────────────┼────────┐                     │
-              │                        │        │                     ▼
-              ▼                        │        ▼              ┌──────────────┐
-┌──────────────────────┐               │  ┌────────────────┐   │  charts.py   │
-│ vLLM (CUDA / RunPod) │ ─── /metrics ─┼─▶│   Prometheus   │   │  PNG + SVG   │
-│  • continuous batch  │               │  └───────┬────────┘   └──────────────┘
-│  • KV cache          │               │          │
-│  • AWQ + Marlin      │               │          ▼
-└──────────────────────┘               │   ┌────────────────┐
-                                       │   │    Grafana     │
-              ┌────────────────────────┼──▶│   dashboard    │
-              │                        │   └────────────────┘
-              │                        │
-              ▼                        │
-┌──────────────────────┐               │
-│  lm-evaluation-      │               │
-│  harness             │ ──────────────┘
-│  (MMLU, GSM8K,       │
-│   HellaSwag)         │
-└──────────────────────┘
+```mermaid
+flowchart TB
+    sharegpt["ShareGPT trace (load)"]
+    scripts["scripts/bench"]
+    bench["vllm bench serve<br/>(concurrency sweep)"]
+    json["results/bench/*.json"]
+    metrics["forge.benchmark.metrics"]
+    charts["charts.py<br/>PNG + SVG"]
+    vllm["vLLM (CUDA / RunPod)<br/>continuous batching, KV cache,<br/>AWQ + Marlin"]
+    prom["Prometheus"]
+    grafana["Grafana dashboard"]
+    lmeval["lm-evaluation-harness<br/>(MMLU, GSM8K, HellaSwag)"]
+
+    sharegpt --> bench
+    scripts --> bench
+    bench --> json
+    json --> metrics
+    metrics --> charts
+    bench -.->|"/v1/chat/completions<br/>/v1/completions"| vllm
+    lmeval -.-> vllm
+    vllm -->|"/metrics"| prom
+    prom --> grafana
 ```
 
 ## Stack
@@ -103,7 +88,7 @@ This repo answers one question rigorously: *"Should I self-host an open-source L
 | Tests | pytest + pytest-cov | Strategic coverage of the load-bearing utilities (parsers, cost model, chart data) — not LLM outputs. |
 | CI | GitHub Actions | Ruff + mypy + pytest on every PR. No GPU jobs. |
 
-Versions are pinned in `uv.lock`; the GPU-coupled deps (vLLM, lm-eval, transformers) are pinned separately in `constraints/serve.txt` and `constraints/eval.txt` — see [`DECISIONS.md`](./DECISIONS.md) for the rationale.
+Versions are pinned in `uv.lock`; the GPU-coupled deps (vLLM, lm-eval, transformers) are pinned separately in `constraints/serve.txt` and `constraints/eval.txt`.
 
 ## Local development on M1 MacBook Pro
 
