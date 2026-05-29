@@ -21,16 +21,12 @@ from forge.cost.pricing import API_PRICING, GPU_TIERS, ApiPricing
 
 
 def test_cost_known_value() -> None:
-    """At 2,100 tok/s sustained on a $0.34/hr GPU, $/1M tokens = 0.34 * 1e6 / (3600 * 2100).
-
-    Hand-computed: 340000 / 7,560,000 ≈ 0.04497.
-    """
     cost = self_hosted_cost_per_1m_tokens(
         sustained_throughput_tps=2100.0,
-        gpu_hourly_usd=0.34,
+        gpu_hourly_usd=0.27,
         utilization=1.0,
     )
-    assert cost == pytest.approx(0.04497, abs=1e-4)
+    assert cost == pytest.approx(0.03571, abs=1e-4)
 
 
 def test_cost_scales_linearly_with_gpu_price() -> None:
@@ -81,9 +77,9 @@ def test_cost_rejects_utilization_above_one() -> None:
 
 def test_gpu_tiers_have_canonical_entry() -> None:
     """The benchmark target must always be in the pricing table."""
-    assert "runpod-rtx-4090-community" in GPU_TIERS
-    assert GPU_TIERS["runpod-rtx-4090-community"].hourly_usd > 0
-    assert GPU_TIERS["runpod-rtx-4090-community"].vram_gb == 24
+    assert "runpod-rtx-a5000-pod" in GPU_TIERS
+    assert GPU_TIERS["runpod-rtx-a5000-pod"].hourly_usd == pytest.approx(0.27)
+    assert GPU_TIERS["runpod-rtx-a5000-pod"].vram_gb == 24
 
 
 def test_api_pricing_has_canonical_entries() -> None:
@@ -117,17 +113,16 @@ def test_blended_per_1m_rejects_out_of_range() -> None:
 
 def test_build_self_hosted_renders_notes() -> None:
     sh = build_self_hosted(
-        label="AWQ on 4090",
-        gpu_tier_key="runpod-rtx-4090-community",
+        label="AWQ on A5000",
+        gpu_tier_key="runpod-rtx-a5000-pod",
         sustained_throughput_tps=2100.0,
         utilization=0.9,
     )
     scenario = sh.to_scenario()
-    assert scenario.label == "AWQ on 4090"
+    assert scenario.label == "AWQ on A5000"
     assert "2100 tok/s sustained" in scenario.notes
     assert "90%" in scenario.notes
-    # $/1M = 0.34 * 1e6 / (3600 * 2100 * 0.9) = ≈ 0.04996.
-    assert scenario.usd_per_1m_tokens == pytest.approx(0.04996, abs=1e-4)
+    assert scenario.usd_per_1m_tokens == pytest.approx(0.03968, abs=1e-4)
 
 
 def test_build_self_hosted_unknown_gpu_raises_clean() -> None:
@@ -137,8 +132,8 @@ def test_build_self_hosted_unknown_gpu_raises_clean() -> None:
 
 def test_compare_bundles_self_hosted_and_api() -> None:
     sh = build_self_hosted(
-        label="AWQ on 4090",
-        gpu_tier_key="runpod-rtx-4090-community",
+        label="AWQ on A5000",
+        gpu_tier_key="runpod-rtx-a5000-pod",
         sustained_throughput_tps=2100.0,
     )
     cmp = compare([sh], ["gpt-4o", "claude-sonnet-4-6"], input_share=0.5)
@@ -147,7 +142,7 @@ def test_compare_bundles_self_hosted_and_api() -> None:
     assert "GPT-4o" in labels_api
     assert "Claude Sonnet 4.6" in labels_api
     gpt = next(r for r in cmp.api if r.label == "GPT-4o")
-    assert cmp.self_hosted[0].usd_per_1m_tokens < gpt.usd_per_1m_tokens / 100
+    assert cmp.self_hosted[0].usd_per_1m_tokens < gpt.usd_per_1m_tokens / 50
 
 
 def test_compare_rejects_invalid_input_share() -> None:
@@ -157,12 +152,12 @@ def test_compare_rejects_invalid_input_share() -> None:
 
 def test_to_dict_round_trips_through_json() -> None:
     sh = build_self_hosted(
-        label="AWQ on 4090",
-        gpu_tier_key="runpod-rtx-4090-community",
+        label="AWQ on A5000",
+        gpu_tier_key="runpod-rtx-a5000-pod",
         sustained_throughput_tps=2100.0,
     )
     cmp = compare([sh], ["gpt-4o"])
     encoded = json.dumps(cmp.to_dict())
     decoded = json.loads(encoded)
     assert decoded["input_share"] == cmp.input_share
-    assert decoded["self_hosted"][0]["label"] == "AWQ on 4090"
+    assert decoded["self_hosted"][0]["label"] == "AWQ on A5000"

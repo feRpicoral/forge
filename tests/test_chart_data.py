@@ -79,8 +79,8 @@ def test_latency_chart_rejects_unknown_metric(tmp_path: Path) -> None:
 
 def test_cost_chart_writes_png_and_svg(tmp_path: Path) -> None:
     sh = build_self_hosted(
-        label="AWQ on 4090",
-        gpu_tier_key="runpod-rtx-4090-community",
+        label="AWQ on A5000",
+        gpu_tier_key="runpod-rtx-a5000-pod",
         sustained_throughput_tps=2100.0,
     )
     cmp = compare([sh], ["gpt-4o", "claude-sonnet-4-6"])

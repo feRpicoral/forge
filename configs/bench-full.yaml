@@ -1,15 +1,15 @@
-# Full benchmark sweep — RunPod RTX 4090 24 GB, Llama 3.1 8B.
+# Full benchmark sweep — RunPod RTX A5000 24 GB, Llama 3.1 8B.
 #
 # This file is committed but is NEVER auto-run. It is the input to the paid
-# benchmark run (Phase 7). Every value here must be reviewed line-by-line during
-# the Phase 6 pre-flight checklist.
+# benchmark run. Every value here must be reviewed line-by-line during
+# the pre-flight checklist.
 #
 # Two variants of this file ship — one per quantization. The orchestrator
 # (deploy/runpod-run.sh) starts the BF16 server, runs this sweep, stops the
 # server, restarts with QUANTIZATION=awq, and re-runs with bench-full-awq.yaml.
 
 name: full-bf16
-description: Llama 3.1 8B BF16 on RTX 4090 24 GB, ShareGPT trace.
+description: Llama 3.1 8B BF16 on RTX A5000 24 GB, ShareGPT trace.
 model: meta-llama/Llama-3.1-8B-Instruct
 base_url: http://localhost:8000/v1
 backend: openai-chat

@@ -2,7 +2,7 @@
 #
 # scripts/serve.py reads its config from environment variables (see .env.example).
 # This file exists to document the flags we *intentionally* set, with links to the
-# upstream vLLM docs. Every CUDA-only flag must be reviewed in the Phase 6
+# upstream vLLM docs. Every CUDA-only flag must be reviewed in the
 # pre-flight checklist.
 #
 # vLLM CLI reference: https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html
@@ -23,5 +23,5 @@ port: 8000
 gpu_memory_utilization: 0.90  # leave 10% headroom for activations + CUDA graphs.
 kv_cache_dtype: auto          # `auto` selects per-engine default. `fp8` halves KV
                               # cache memory on H100/Ada with negligible quality loss,
-                              # but is unsupported on RTX 4090 (no FP8 KV path).
+                              # but is unsupported on the RTX A5000 target.
 tensor_parallel_size: 1       # single-GPU. Multi-GPU sharding is out of scope.

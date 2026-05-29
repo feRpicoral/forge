@@ -1,9 +1,9 @@
-"""Generate placeholder illustrative bench + eval JSONs so the chart pipeline
+"""Generate illustrative bench + eval JSONs so the chart pipeline
 can be exercised end-to-end before the paid run lands real data.
 
-Numbers are *plausible* (in the right shape and order of magnitude for Llama
-3.1 8B on RTX 4090) but **not measured**. They are clearly marked illustrative
-and are replaced wholesale by the real Phase 7 outputs.
+Numbers are plausible (in the right shape and order of magnitude for Llama
+3.1 8B on RTX A5000) but **not measured**. They are clearly marked illustrative
+and are replaced wholesale by the real RunPod outputs.
 
 Run once:
     uv run python -m scripts._gen_illustrative
@@ -17,7 +17,7 @@ from pathlib import Path
 # Concurrency levels, must match configs/bench-full*.yaml.
 CONCURRENCY_LEVELS = [1, 4, 16, 32, 64]
 
-# Plausible throughput curve for Llama 3.1 8B on RTX 4090, BF16 vs AWQ-INT4.
+# Plausible throughput curve for Llama 3.1 8B on RTX A5000, BF16 vs AWQ-INT4.
 # AWQ wins from c≥4 because INT4 cuts memory bandwidth pressure.
 BF16 = {
     1: {
@@ -112,7 +112,7 @@ def bench_payload(
     """vLLM bench-serve-compatible payload."""
     return {
         "_illustrative": True,
-        "_note": "Plausible-but-NOT-measured. Replaced by real RunPod data after Phase 7.",
+        "_note": "Plausible-but-NOT-measured. Replaced by real RunPod data.",
         "date": "illustrative",
         "endpoint_type": "openai-chat",
         "backend": "openai-chat",
