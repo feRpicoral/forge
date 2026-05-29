@@ -31,4 +31,4 @@ The production CUDA `Dockerfile` doesn't bundle Prometheus + Grafana — they ru
 1. Forward the pod's `:8000/metrics` to a local Prometheus on your laptop.
 2. Or use RunPod's built-in monitoring (CPU/GPU graphs) plus the per-run benchmark JSONs.
 
-The screenshots in the README come from a brief on-pod stress run with this dashboard pulled up. Methodology recorded in `docs/methodology.md`.
+The screenshots in the README come from a brief on-pod stress run with this dashboard pulled up. Methodology is recorded in `docs/methodology.md`.

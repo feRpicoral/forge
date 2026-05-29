@@ -6,18 +6,18 @@ GPU run must pass every box in this checklist *before* the pod is started.
 
 ## Why this exists
 
-The plan budgets $50–$100 total for paid GPU time, with $0.34/hr as the rented
-rate. That gives a working margin of roughly 150 GPU-hours total — sounds like
-a lot until you realize a botched run, a config typo, or a missing token
-swallows an hour. The orchestrator script (`./runpod-run.sh`) and this
-checklist together guarantee the run is one tightly-scripted shell command, not
-exploration.
+The plan budgets $50–$100 total for paid GPU time, with $0.69/hr as the listed
+RTX 4090 Community Pod rate on 2026-05-29. That gives a working margin of
+roughly 70–145 GPU-hours total — plenty for this project, but still worth
+protecting from config typos and missing tokens. The orchestrator script
+(`./runpod-run.sh`) and this checklist together keep the run to one
+tightly-scripted shell command, not exploration.
 
 ## Choosing the pod
 
 | Setting | Value | Why |
 |---|---|---|
-| GPU | **RTX 4090 24 GB (Community)** | Cheapest tier that fits Llama 3.1 8B BF16 + KV cache headroom. ~$0.34/hr. |
+| GPU | **RTX 4090 24 GB (Community)** | Cheapest tier that fits Llama 3.1 8B BF16 + KV cache headroom. ~$0.69/hr. |
 | Image | `nvidia/cuda:12.4.x-runtime-ubuntu22.04` or RunPod's "PyTorch 2.4 / CUDA 12.4" template | Matches vLLM's supported CUDA matrix. |
 | Storage | **50 GB** persistent volume | Llama 3.1 8B BF16 weights ~16 GB + AWQ ~5 GB + caches + logs. Don't run out mid-bench. |
 | Idle shutdown | **15 min** | Belt and suspenders against forgetting to stop the pod. |
@@ -69,7 +69,7 @@ is started. None of these requires the GPU.
 ### Time + spend budget
 
 - [ ] Written down: expected wall-clock for each variant (rough estimate: BF16 ~60 min, AWQ ~60 min).
-- [ ] Written down: target total spend ≤ $1.50 ($0.34/hr × ~4 hours including setup).
+- [ ] Written down: target total spend ≤ $3.00 ($0.69/hr × ~4 hours including setup).
 - [ ] Hard abort plan: if the run blows past 2x the time estimate, `Ctrl-C` and re-evaluate before re-running.
 
 ## On-pod execution
@@ -103,5 +103,5 @@ bash deploy/runpod-run.sh --variant awq
 - Stop the pod immediately. RunPod bills by the second.
 - Pull `results/bench/full-bf16/`, `results/bench/full-awq/`, and `results/eval/full/` to local.
 - Run `make chart` locally to regenerate every chart from the new data.
-- Reconcile spend against estimate. Note any deltas in `DECISIONS.md`.
+- Reconcile spend against the estimate before updating the README cost claim.
 - Commit the new `results/` JSONs and regenerated charts to a `chore(results): add runpod-<date>` commit.

@@ -21,16 +21,12 @@ from forge.cost.pricing import API_PRICING, GPU_TIERS, ApiPricing
 
 
 def test_cost_known_value() -> None:
-    """At 2,100 tok/s sustained on a $0.34/hr GPU, $/1M tokens = 0.34 * 1e6 / (3600 * 2100).
-
-    Hand-computed: 340000 / 7,560,000 ≈ 0.04497.
-    """
     cost = self_hosted_cost_per_1m_tokens(
         sustained_throughput_tps=2100.0,
-        gpu_hourly_usd=0.34,
+        gpu_hourly_usd=0.69,
         utilization=1.0,
     )
-    assert cost == pytest.approx(0.04497, abs=1e-4)
+    assert cost == pytest.approx(0.09127, abs=1e-4)
 
 
 def test_cost_scales_linearly_with_gpu_price() -> None:
@@ -126,8 +122,7 @@ def test_build_self_hosted_renders_notes() -> None:
     assert scenario.label == "AWQ on 4090"
     assert "2100 tok/s sustained" in scenario.notes
     assert "90%" in scenario.notes
-    # $/1M = 0.34 * 1e6 / (3600 * 2100 * 0.9) = ≈ 0.04996.
-    assert scenario.usd_per_1m_tokens == pytest.approx(0.04996, abs=1e-4)
+    assert scenario.usd_per_1m_tokens == pytest.approx(0.10141, abs=1e-4)
 
 
 def test_build_self_hosted_unknown_gpu_raises_clean() -> None:
@@ -147,7 +142,7 @@ def test_compare_bundles_self_hosted_and_api() -> None:
     assert "GPT-4o" in labels_api
     assert "Claude Sonnet 4.6" in labels_api
     gpt = next(r for r in cmp.api if r.label == "GPT-4o")
-    assert cmp.self_hosted[0].usd_per_1m_tokens < gpt.usd_per_1m_tokens / 100
+    assert cmp.self_hosted[0].usd_per_1m_tokens < gpt.usd_per_1m_tokens / 50
 
 
 def test_compare_rejects_invalid_input_share() -> None:

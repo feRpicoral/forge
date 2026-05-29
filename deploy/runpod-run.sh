@@ -2,7 +2,7 @@
 # RunPod orchestrator — start vLLM, run a benchmark sweep, run quality eval,
 # stop the server, exit.
 #
-# Designed to run end-to-end with zero manual intervention. The Phase 6
+# Designed to run end-to-end with zero manual intervention. The local
 # pre-flight rehearses this exact script on M1 against a tiny model via the
 # --rehearsal flag before any GPU is rented.
 #

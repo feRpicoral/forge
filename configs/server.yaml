@@ -2,7 +2,7 @@
 #
 # scripts/serve.py reads its config from environment variables (see .env.example).
 # This file exists to document the flags we *intentionally* set, with links to the
-# upstream vLLM docs. Every CUDA-only flag must be reviewed in the Phase 6
+# upstream vLLM docs. Every CUDA-only flag must be reviewed in the
 # pre-flight checklist.
 #
 # vLLM CLI reference: https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html

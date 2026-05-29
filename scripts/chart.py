@@ -7,7 +7,7 @@ Usage:
 When no real benchmark data is committed yet, this script emits illustrative
 charts from synthetic data shipped under ``results/illustrative/`` so the
 chart pipeline itself can be validated. Real charts replace those files after
-Phase 7.
+the paid RunPod run.
 """
 
 from __future__ import annotations

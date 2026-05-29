@@ -2,7 +2,7 @@
 
 > ⚠️ **The numbers in this README are fictional placeholders, pending the actual benchmark run.** The chart pipeline and methodology are real; the *values* in the charts are plausible Llama 3.1 8B/4090 estimates. Real measurements from the RunPod RTX 4090 run will replace them wholesale.
 
-> **Self-host Llama 3.1 8B Instruct on a single $0.34/hr RTX 4090, serve it at ~5,200 generation tokens/sec, and pay ~$0.009 per 1M tokens — roughly **680× cheaper than GPT-4o** while retaining ~98% of full-precision quality.**
+> **Self-host Llama 3.1 8B Instruct on a single $0.69/hr RTX 4090, serve it at ~5,200 generation tokens/sec, and pay ~$0.019 per 1M tokens — roughly **335× cheaper than GPT-4o** while retaining ~98% of full-precision quality.**
 
 Forge is a focused engineering artifact, not a SaaS. It serves an open-source LLM with a production-grade stack (vLLM + AWQ-INT4 + Marlin kernels), benchmarks it under realistic concurrency, evaluates quantization quality on standard tasks, and traces every dollar in the cost comparison back to a measured throughput number.
 
@@ -24,7 +24,7 @@ TTFT scales with concurrency on both variants (prefill is compute-bound), but AW
 
 ![Cost per 1M tokens](./results/charts/cost-per-1m-tokens.png)
 
-Even at full BF16, self-hosting on a $0.34/hr 4090 is two orders of magnitude cheaper than GPT-4o blended pricing. With AWQ-INT4, the ratio is ~680×.
+Even at full BF16, self-hosting on a $0.69/hr 4090 is two orders of magnitude cheaper than GPT-4o blended pricing. With AWQ-INT4, the ratio is ~335×.
 
 ### Quantization retains ~98% of quality
 
@@ -79,7 +79,7 @@ flowchart TB
 | Serving engine | **vLLM** (latest stable) | Native OpenAI-compatible API, continuous batching, KV cache, AWQ + Marlin kernel support, native Prometheus metrics. |
 | Model | **Llama 3.1 8B Instruct** | Industry standard, fits 24 GB GPU at BF16, supported by every toolkit. |
 | Quantization | **AWQ-INT4 with Marlin kernels** | Fastest INT4 path on vLLM; ~1–2% better quality retention than GPTQ. |
-| GPU | **RunPod RTX 4090 24 GB (Community)** | ~$0.34/hr — cheapest tier that fits BF16 weights + KV cache. |
+| GPU | **RunPod RTX 4090 24 GB (Community)** | ~$0.69/hr — cheapest tier that fits BF16 weights + KV cache. |
 | Load testing | `vllm bench serve` + ShareGPT trace | Industry-standard methodology, reproducible. |
 | Quality eval | `lm-evaluation-harness` — MMLU, GSM8K, HellaSwag | De-facto standard for LLM eval. |
 | Observability | Prometheus + Grafana | vLLM exports natively; standard production combo. |
@@ -125,13 +125,13 @@ bash deploy/runpod-run.sh --variant awq
 
 ## Methodology
 
-- **Hardware**: RunPod RTX 4090 24 GB Community tier, ~$0.34/hr.
+- **Hardware**: RunPod RTX 4090 24 GB Community tier, ~$0.69/hr.
 - **Model**: `meta-llama/Llama-3.1-8B-Instruct` (BF16 baseline) and `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4` (the AWQ-INT4 variant, built with the canonical recipe documented in [`forge/quantization/awq.py`](./forge/quantization/awq.py)).
 - **Workload**: ShareGPT trace at concurrency levels 1, 4, 16, 32, 64. 256 prompts per level.
 - **Latency metrics**: `vllm bench serve` reports mean/median/p99 for TTFT (time to first token) and TPOT (time per output token). We treat the p99 as the upper bound for latency-sensitive use cases.
 - **Quality eval**: `lm-evaluation-harness` with `local-completions` model type pointed at the running vLLM endpoint. Tasks: MMLU (5-shot, `acc`), GSM8K (5-shot, `exact_match`), HellaSwag (5-shot, `acc_norm`). No `--limit` for the real run.
 - **Cost model**: `$/1M tokens = gpu_hourly_usd * 1e6 / (3600 * sustained_throughput * utilization)`. We use the peak total token throughput from the sweep at `utilization=1.0` for the headline number; sensitivity at 80% utilization is in the cost-comparison JSON next to the chart.
-- **API pricing**: collected 2026-05-26 from each provider's pricing page. Sources in `forge/cost/pricing.py`.
+- **API pricing**: collected 2026-05-29 from each provider's pricing page. Sources in `forge/cost/pricing.py`.
 
 ## Project layout
 

@@ -1,6 +1,6 @@
 {
   "_illustrative": true,
-  "_note": "Plausible-but-NOT-measured. Replaced by real RunPod data after Phase 7.",
+  "_note": "Plausible-but-NOT-measured. Replaced by real RunPod data.",
   "date": "illustrative",
   "endpoint_type": "openai-chat",
   "backend": "openai-chat",

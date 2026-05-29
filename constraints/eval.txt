@@ -10,10 +10,9 @@
 # The [api] extra is required for the local-chat-completions model type we
 # use to evaluate against vLLM's OpenAI-compatible endpoint.
 #
-# Validated combinations (record exact versions resolved at install time in
-# DECISIONS.md):
+# Validated combinations:
 #   - macOS arm64 (M1) — smoke eval against tiny model on vLLM CPU
-#   - linux x86_64 GPU — Phase 7 paid run
+#   - linux x86_64 GPU — paid RunPod run
 
 lm-eval>=0.4.5
 # Compatible with our vLLM transformers pin.

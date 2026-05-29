@@ -1,8 +1,8 @@
 # Full benchmark sweep — RunPod RTX 4090 24 GB, Llama 3.1 8B.
 #
 # This file is committed but is NEVER auto-run. It is the input to the paid
-# benchmark run (Phase 7). Every value here must be reviewed line-by-line during
-# the Phase 6 pre-flight checklist.
+# benchmark run. Every value here must be reviewed line-by-line during
+# the pre-flight checklist.
 #
 # Two variants of this file ship — one per quantization. The orchestrator
 # (deploy/runpod-run.sh) starts the BF16 server, runs this sweep, stops the

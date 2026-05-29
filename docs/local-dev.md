@@ -69,7 +69,7 @@ The PyPI wheel for vLLM works on darwin arm64 — no source build needed. Instal
 uv pip install -c constraints/serve.txt vllm
 ```
 
-This pulls vLLM 0.11.0 plus a transformers 4.x pin. Without the constraint, uv would pull transformers 5.x, which crashes vLLM at startup with `AttributeError: Qwen2Tokenizer has no attribute all_special_tokens_extended` — see `DECISIONS.md` for the rationale.
+This pulls vLLM 0.11.0 plus a transformers 4.x pin. Without the constraint, uv would pull transformers 5.x, which crashes vLLM at startup with `AttributeError: Qwen2Tokenizer has no attribute all_special_tokens_extended`.
 
 vLLM is intentionally *not* a managed project dependency. Locking it inside `pyproject.toml` forces uv to resolve CUDA-only transitives (nvidia-cudnn-frontend etc.) for every platform in the lock, which fails on darwin. The constraint file pattern keeps the project lock clean and works on both macOS and Linux.
 
