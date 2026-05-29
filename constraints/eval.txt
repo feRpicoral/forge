@@ -15,5 +15,6 @@
 #   - linux x86_64 GPU — paid RunPod run
 
 lm-eval>=0.4.5
+numpy<2.3
 # Compatible with our vLLM transformers pin.
 transformers>=4.45,<5.0
