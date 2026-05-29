@@ -7,6 +7,7 @@ construction) are tested here.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -92,11 +93,31 @@ def test_build_command_extra_args_underscore_converted_to_dash() -> None:
     assert "--random_input_len" not in cmd
 
 
+def _write_valid_result(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+        "backend": "openai-chat",
+        "dataset_name": "random",
+        "num_prompts": 8,
+        "seed": 42,
+        "duration": 1.0,
+        "request_throughput": 1.0,
+        "output_throughput": 2.0,
+        "total_token_throughput": 3.0,
+        "mean_ttft_ms": 1.0,
+        "median_ttft_ms": 1.0,
+        "p99_ttft_ms": 1.0,
+        "mean_tpot_ms": 1.0,
+        "median_tpot_ms": 1.0,
+        "p99_tpot_ms": 1.0,
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
 def test_run_sweep_records_monotonic_duration(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """``duration_seconds`` must reflect the wall-clock cost of ``vllm bench``."""
-
     monotonic_values = iter([100.0, 102.5, 110.0, 114.25])
 
     def fake_monotonic() -> float:
@@ -107,6 +128,9 @@ def test_run_sweep_records_monotonic_duration(
             self.returncode = 0
 
     def fake_run(cmd: list[str], check: bool = False) -> _FakeProc:
+        result_dir = Path(cmd[cmd.index("--result-dir") + 1])
+        result_filename = cmd[cmd.index("--result-filename") + 1]
+        _write_valid_result(result_dir / result_filename)
         return _FakeProc()
 
     monkeypatch.setattr("forge.benchmark.runner.time.monotonic", fake_monotonic)
@@ -117,3 +141,23 @@ def test_run_sweep_records_monotonic_duration(
     assert [o.concurrency for o in outcomes] == [1, 2]
     assert outcomes[0].duration_seconds == pytest.approx(2.5)
     assert outcomes[1].duration_seconds == pytest.approx(4.25)
+
+
+def test_run_sweep_fails_when_successful_process_writes_no_result(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class _FakeProc:
+        def __init__(self) -> None:
+            self.returncode = 0
+
+    def fake_run(cmd: list[str], check: bool = False) -> _FakeProc:
+        return _FakeProc()
+
+    monkeypatch.setattr("forge.benchmark.runner.subprocess.run", fake_run)
+
+    outcomes = run_sweep(
+        _sweep(result_dir=tmp_path, concurrency_levels=[1]), vllm_executable="/fake/vllm"
+    )
+
+    assert len(outcomes) == 1
+    assert not outcomes[0].succeeded

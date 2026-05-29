@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from forge.benchmark.config import BenchSweep
+from forge.benchmark.metrics import parse_result
 
 
 @dataclass(frozen=True)
@@ -54,17 +55,27 @@ def run_sweep(sweep: BenchSweep, *, vllm_executable: str | None = None) -> list[
 
         started_at = time.monotonic()
         proc = subprocess.run(cmd, check=False)
+        returncode = proc.returncode
+        if returncode == 0:
+            try:
+                parse_result(result_path, concurrency)
+            except Exception as exc:
+                print(
+                    f"[forge] result validation failed for {result_path}: {exc}",
+                    file=sys.stderr,
+                )
+                returncode = 1
         outcomes.append(
             RunOutcome(
                 concurrency=concurrency,
                 result_path=result_path,
                 duration_seconds=time.monotonic() - started_at,
-                returncode=proc.returncode,
+                returncode=returncode,
             )
         )
-        if proc.returncode != 0:
+        if returncode != 0:
             print(
-                f"[forge] concurrency {concurrency} failed (rc={proc.returncode}); aborting sweep.",
+                f"[forge] concurrency {concurrency} failed (rc={returncode}); aborting sweep.",
                 file=sys.stderr,
             )
             break
