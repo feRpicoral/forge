@@ -177,7 +177,11 @@ def test_real_full_configs_parse() -> None:
     """Both production configs must always parse cleanly."""
     bf16 = load_sweep(Path("configs/bench-full.yaml"))
     awq = load_sweep(Path("configs/bench-full-awq.yaml"))
+    dataset_path = "/workspace/datasets/ShareGPT_V3_unfiltered_cleaned_split.json"
+
     assert bf16.name == "full-bf16"
     assert awq.name == "full-awq"
     assert bf16.concurrency_levels == awq.concurrency_levels
     assert bf16.dataset.num_prompts == awq.dataset.num_prompts
+    assert bf16.dataset.extra_args["dataset_path"] == dataset_path
+    assert awq.dataset.extra_args["dataset_path"] == dataset_path
