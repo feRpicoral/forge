@@ -22,7 +22,7 @@ tightly-scripted shell command, not exploration.
 | Image | `runpod-torch-v240` | Active pod image. Matches the PyTorch/CUDA runtime needed by vLLM. |
 | vCPU / memory | **9 vCPU / 50 GB RAM** | Active pod shape. |
 | Container disk | **20 GB** | Keep model weights off this disk. |
-| Volume | **50 GB mounted at `/workspace`** | Llama 3.1 8B BF16 weights ~16 GB + AWQ ~5 GB + caches + logs. |
+| Volume | **50 GB mounted at `/workspace`** | Minimum for BF16 + AWQ caches. Use 80–100 GB for new pods if available. |
 | Price | **$0.27/hr compute; ~$0.28/hr running total** | $0.003/hr container storage + $0.007/hr volume storage. |
 | Idle shutdown | **15 min** | Belt and suspenders against forgetting to stop the pod. |
 
@@ -54,7 +54,8 @@ is started. None of these requires the GPU.
 
 ### Hugging Face access
 
-- [ ] `HF_TOKEN` env var is set on the pod's environment template, or you will log in once on the pod using the snippet below.
+- [ ] `HF_TOKEN` is configured as a RunPod Secret on the pod template.
+- [ ] `HF_HOME=/workspace/.cache/huggingface` is set on the pod template.
 - [ ] Token has "read" scope and is approved for the gated Llama 3.1 8B repo.
 - [ ] The pod either has `HF_TOKEN` set or has a cached Hugging Face token under `HF_HOME`.
 - [ ] On the M1, pulling the *tokenizer only* succeeds:
@@ -90,22 +91,19 @@ uv pip install -c constraints/serve.txt vllm
 uv pip install -c constraints/eval.txt "lm-eval[api]"
 
 # 2. Auth
+# Preferred: set HF_TOKEN as a RunPod Secret and HF_HOME as a plain env var
+# before the pod starts. Changing them after start restarts the pod.
 export HF_HOME=/workspace/.cache/huggingface
 mkdir -p "$HF_HOME"
-read -rsp "HF token: " HF_TOKEN
-echo
-export HF_TOKEN
 uv run python - <<'PY'
 import os
-from huggingface_hub import HfApi, login
+from huggingface_hub import HfApi
 
 token = os.environ["HF_TOKEN"]
-login(token=token, add_to_git_credential=False)
 api = HfApi(token=token)
 print("user:", api.whoami()["name"])
 print("model:", api.model_info("meta-llama/Llama-3.1-8B-Instruct").id)
 PY
-unset HF_TOKEN
 
 # 3. Download the ShareGPT trace
 mkdir -p /workspace/datasets
@@ -128,6 +126,28 @@ tail -f logs/runpod-awq.log
 
 Do not run the paid variants in the SSH foreground. If the SSH connection drops,
 the foreground shell can terminate the orchestrator before it reaches eval.
+
+If the pod is already running and changing RunPod env vars would restart it,
+log in once without printing the token:
+
+```bash
+export HF_HOME=/workspace/.cache/huggingface
+mkdir -p "$HF_HOME"
+read -rsp "HF token: " HF_TOKEN
+echo
+export HF_TOKEN
+uv run python - <<'PY'
+import os
+from huggingface_hub import HfApi, login
+
+token = os.environ["HF_TOKEN"]
+login(token=token, add_to_git_credential=False)
+api = HfApi(token=token)
+print("user:", api.whoami()["name"])
+print("model:", api.model_info("meta-llama/Llama-3.1-8B-Instruct").id)
+PY
+unset HF_TOKEN
+```
 
 If a benchmark sweep completed but eval did not, resume only the missing eval:
 
