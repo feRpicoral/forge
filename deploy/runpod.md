@@ -49,7 +49,7 @@ is started. None of these requires the GPU.
 ### Config review (read line-by-line, don't just glance)
 
 - [ ] `configs/server.yaml`: model id, max_model_len, max_num_seqs, kv_cache_dtype, gpu_memory_utilization, tensor_parallel_size.
-- [ ] `configs/bench-full.yaml` and `configs/bench-full-awq.yaml`: model id (correct checkpoint per variant), `num_prompts`, `concurrency_levels`, `result_dir`, `seed`.
+- [ ] `configs/bench-full.yaml` and `configs/bench-full-awq.yaml`: model id (correct checkpoint per variant), `num_prompts`, `concurrency_levels`, `result_dir`, `seed`, `dataset.extra_args.dataset_path`.
 - [ ] `configs/eval-full-bf16.yaml` and `configs/eval-full-awq.yaml`: tasks list, `num_fewshot`, `batch_size`, `limit` (must be `null` for the real run), `result_dir`.
 
 ### Hugging Face access
@@ -93,13 +93,19 @@ export HF_TOKEN=hf_your_token_here
 export HF_HOME=/workspace/.cache/huggingface
 mkdir -p "$HF_HOME"
 
-# 3. Run BF16 variant
+# 3. Download the ShareGPT trace
+mkdir -p /workspace/datasets
+curl -fL --retry 5 --continue-at - \
+  -o /workspace/datasets/ShareGPT_V3_unfiltered_cleaned_split.json \
+  https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/ShareGPT_V3_unfiltered_cleaned_split.json
+
+# 4. Run BF16 variant
 bash deploy/runpod-run.sh --variant bf16
 
-# 4. Run AWQ variant (server restart is handled by the script)
+# 5. Run AWQ variant (server restart is handled by the script)
 bash deploy/runpod-run.sh --variant awq
 
-# 5. Pull results to local
+# 6. Pull results to local
 # (from your M1, or use rsync / pod's file browser)
 ```
 

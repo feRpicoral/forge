@@ -16,6 +16,8 @@ backend: openai-chat
 dataset:
   name: sharegpt
   num_prompts: 256
+  extra_args:
+    dataset_path: /workspace/datasets/ShareGPT_V3_unfiltered_cleaned_split.json
 seed: 42
 result_dir: results/bench/full-bf16
 # Concurrency sweep: covers single-user latency through saturation.
