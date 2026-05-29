@@ -9,13 +9,13 @@ Until the full RunPod directories exist, README numbers must keep the placeholde
 
 ## Benchmark
 
-The benchmark target is `meta-llama/Llama-3.1-8B-Instruct` on a single RunPod RTX 4090 Community Pod. The BF16 baseline uses the gated Meta checkpoint. The quantized variant uses `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4`.
+The benchmark target is `meta-llama/Llama-3.1-8B-Instruct` on a single RunPod RTX A5000 pod. The BF16 baseline uses the gated Meta checkpoint. The quantized variant uses `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4`.
 
 The orchestrator starts vLLM, waits for `/health`, runs `vllm bench serve` against the OpenAI-compatible chat endpoint, then runs `lm-evaluation-harness` against the same server.
 
 ```mermaid
 flowchart LR
-    runpod["RunPod RTX 4090 Pod"] --> vllm["vLLM OpenAI-compatible server"]
+    runpod["RunPod RTX A5000 Pod"] --> vllm["vLLM OpenAI-compatible server"]
     bench["vllm bench serve"] --> vllm
     eval["lm-evaluation-harness"] --> vllm
     bench --> bench_json["results/bench/full-*/*.json"]
@@ -32,4 +32,4 @@ Quality retention compares AWQ-INT4 to BF16 using MMLU, GSM8K, and HellaSwag at 
 
 ## Pricing
 
-GPU and API prices are point-in-time constants in `forge/cost/pricing.py`. Before publishing final numbers, refresh those constants, run `make chart`, and update README claims from the regenerated JSON.
+GPU compute and API prices are point-in-time constants in `forge/cost/pricing.py`. Before publishing final numbers, refresh those constants, run `make chart`, and update README claims from the regenerated JSON. RunPod storage is tracked in `deploy/runpod.md` and kept out of the token-cost formula so the GPU comparison stays consistent with provider compute pricing.

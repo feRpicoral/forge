@@ -6,9 +6,10 @@ GPU run must pass every box in this checklist *before* the pod is started.
 
 ## Why this exists
 
-The plan budgets $50–$100 total for paid GPU time, with $0.69/hr as the listed
-RTX 4090 Community Pod rate on 2026-05-29. That gives a working margin of
-roughly 70–145 GPU-hours total — plenty for this project, but still worth
+The plan budgets $50–$100 total for paid GPU time, with $0.27/hr as the active
+RTX A5000 pod's compute rate on 2026-05-29. Storage adds about $0.01/hr, bringing
+the active running pod to roughly $0.28/hr. That gives a working margin of
+roughly 175–350 pod-hours total — plenty for this project, but still worth
 protecting from config typos and missing tokens. The orchestrator script
 (`./runpod-run.sh`) and this checklist together keep the run to one
 tightly-scripted shell command, not exploration.
@@ -17,9 +18,12 @@ tightly-scripted shell command, not exploration.
 
 | Setting | Value | Why |
 |---|---|---|
-| GPU | **RTX 4090 24 GB (Community)** | Cheapest tier that fits Llama 3.1 8B BF16 + KV cache headroom. ~$0.69/hr. |
-| Image | `nvidia/cuda:12.4.x-runtime-ubuntu22.04` or RunPod's "PyTorch 2.4 / CUDA 12.4" template | Matches vLLM's supported CUDA matrix. |
-| Storage | **50 GB** persistent volume | Llama 3.1 8B BF16 weights ~16 GB + AWQ ~5 GB + caches + logs. Don't run out mid-bench. |
+| GPU | **RTX A5000 24 GB** | Available 24 GB tier that fits Llama 3.1 8B BF16 + KV cache headroom. |
+| Image | `runpod-torch-v240` | Active pod image. Matches the PyTorch/CUDA runtime needed by vLLM. |
+| vCPU / memory | **9 vCPU / 50 GB RAM** | Active pod shape. |
+| Container disk | **20 GB** | Keep model weights off this disk. |
+| Volume | **50 GB mounted at `/workspace`** | Llama 3.1 8B BF16 weights ~16 GB + AWQ ~5 GB + caches + logs. |
+| Price | **$0.27/hr compute; ~$0.28/hr running total** | $0.003/hr container storage + $0.007/hr volume storage. |
 | Idle shutdown | **15 min** | Belt and suspenders against forgetting to stop the pod. |
 
 ## Pre-flight checklist
@@ -69,7 +73,7 @@ is started. None of these requires the GPU.
 ### Time + spend budget
 
 - [ ] Written down: expected wall-clock for each variant (rough estimate: BF16 ~60 min, AWQ ~60 min).
-- [ ] Written down: target total spend ≤ $3.00 ($0.69/hr × ~4 hours including setup).
+- [ ] Written down: target total spend ≤ $1.25 (~$0.28/hr running total × ~4 hours including setup).
 - [ ] Hard abort plan: if the run blows past 2x the time estimate, `Ctrl-C` and re-evaluate before re-running.
 
 ## On-pod execution
@@ -87,6 +91,7 @@ uv pip install -c constraints/eval.txt "lm-eval[api]"
 # 2. Auth
 export HF_TOKEN=hf_your_token_here
 export HF_HOME=/workspace/.cache/huggingface
+mkdir -p "$HF_HOME"
 
 # 3. Run BF16 variant
 bash deploy/runpod-run.sh --variant bf16

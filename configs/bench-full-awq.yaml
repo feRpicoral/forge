@@ -4,7 +4,7 @@
 # and the result directory. Run with QUANTIZATION=awq set on the server.
 
 name: full-awq
-description: Llama 3.1 8B AWQ-INT4 on RTX 4090 24 GB, ShareGPT trace.
+description: Llama 3.1 8B AWQ-INT4 on RTX A5000 24 GB, ShareGPT trace.
 # Pinned community AWQ checkpoint. Validated downloadable before the paid run.
 model: hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4
 base_url: http://localhost:8000/v1

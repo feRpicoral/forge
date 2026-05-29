@@ -1,12 +1,12 @@
 """Reference pricing tables for the cost comparison.
 
-GPU hourly rates and commercial-API per-token prices change frequently. Before
+GPU compute hourly rates and commercial-API per-token prices change frequently. Before
 the paid benchmark, refresh both tables against current rates and re-run the
 chart pipeline. Every cost-comparison plot in the README must cite the date
 these numbers were collected.
 
 Sources:
-- RunPod Pods pricing:          https://www.runpod.io/pricing (as of 2026-05-29)
+- RunPod active pod spec:       RTX A5000 compute rate (as of 2026-05-29)
 - OpenAI model pricing:         https://developers.openai.com/api/docs/models (as of 2026-05-29)
 - Anthropic Claude API pricing: https://platform.claude.com/docs/en/about-claude/pricing (as of 2026-05-29)
 """
@@ -46,11 +46,11 @@ class ApiPricing:
 
 # Single source of truth for GPU pricing. Add tiers, don't redefine them inline.
 GPU_TIERS: dict[str, GpuTier] = {
-    "runpod-rtx-4090-community": GpuTier(
-        name="RunPod RTX 4090 (Community)",
-        hourly_usd=0.69,
+    "runpod-rtx-a5000-pod": GpuTier(
+        name="RunPod RTX A5000 Pod",
+        hourly_usd=0.27,
         vram_gb=24,
-        notes="The Forge benchmark target. Fits Llama 3.1 8B BF16 + KV cache headroom.",
+        notes="The Forge benchmark target. Compute-only rate; storage is tracked separately.",
     ),
     "runpod-a100-pcie-community": GpuTier(
         name="RunPod A100 PCIe (Community)",

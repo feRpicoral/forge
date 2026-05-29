@@ -79,13 +79,13 @@ def main(argv: list[str] | None = None) -> int:
     cost = compare(
         [
             build_self_hosted(
-                label="Forge — BF16 on 4090",
-                gpu_tier_key="runpod-rtx-4090-community",
+                label="Forge — BF16 on A5000",
+                gpu_tier_key="runpod-rtx-a5000-pod",
                 sustained_throughput_tps=bf16_peak.total_token_throughput,
             ),
             build_self_hosted(
-                label="Forge — AWQ-INT4 on 4090",
-                gpu_tier_key="runpod-rtx-4090-community",
+                label="Forge — AWQ-INT4 on A5000",
+                gpu_tier_key="runpod-rtx-a5000-pod",
                 sustained_throughput_tps=awq_peak.total_token_throughput,
             ),
         ],

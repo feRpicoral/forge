@@ -1,6 +1,6 @@
 # Local development on M1 MacBook Pro
 
-This is the dev and rehearsal environment. The M1 cannot produce defensible benchmark numbers — no CUDA, no Hopper/Ada FP8, unified-memory bandwidth is not comparable to a 4090 — but it is fully capable of validating the entire pipeline end-to-end against a tiny model. The paid GPU run is exactly the configuration rehearsed locally.
+This is the dev and rehearsal environment. The M1 cannot produce defensible benchmark numbers — no CUDA, no NVIDIA HBM/GDDR bandwidth, unified-memory behavior is not comparable to the rented A5000 pod — but it is fully capable of validating the entire pipeline end-to-end against a tiny model. The paid GPU run is exactly the configuration rehearsed locally.
 
 ## TL;DR
 
@@ -33,7 +33,7 @@ The benchmark harness, the eval pipeline, and the HF Spaces demo all talk to wha
 
 ### A) vLLM CPU — the canonical smoke
 
-This is the *same engine* deployed on RunPod, just running on CPU with FP32/FP16. It exercises the exact code path (server entrypoint, OpenAI-compatible API, request scheduling, the bundled `benchmark_serving.py`). Slow — token throughput is a tiny fraction of a 4090 — but for 10–50 short prompts against a 125M–1.1B-parameter model it's fine, completing in minutes.
+This is the *same engine* deployed on RunPod, just running on CPU with FP32/FP16. It exercises the exact code path (server entrypoint, OpenAI-compatible API, request scheduling, the bundled `benchmark_serving.py`). Slow — token throughput is a tiny fraction of the rented A5000 pod — but for 10–50 short prompts against a 125M–1.1B-parameter model it's fine, completing in minutes.
 
 **Use it for:**
 

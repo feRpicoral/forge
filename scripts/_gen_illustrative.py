@@ -2,7 +2,7 @@
 can be exercised end-to-end before the paid run lands real data.
 
 Numbers are plausible (in the right shape and order of magnitude for Llama
-3.1 8B on RTX 4090) but **not measured**. They are clearly marked illustrative
+3.1 8B on RTX A5000) but **not measured**. They are clearly marked illustrative
 and are replaced wholesale by the real RunPod outputs.
 
 Run once:
@@ -17,7 +17,7 @@ from pathlib import Path
 # Concurrency levels, must match configs/bench-full*.yaml.
 CONCURRENCY_LEVELS = [1, 4, 16, 32, 64]
 
-# Plausible throughput curve for Llama 3.1 8B on RTX 4090, BF16 vs AWQ-INT4.
+# Plausible throughput curve for Llama 3.1 8B on RTX A5000, BF16 vs AWQ-INT4.
 # AWQ wins from c≥4 because INT4 cuts memory bandwidth pressure.
 BF16 = {
     1: {
