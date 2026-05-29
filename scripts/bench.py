@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 from forge.benchmark.config import load_sweep
+from forge.benchmark.metrics import load_results
 from forge.benchmark.runner import run_sweep
 
 
@@ -31,7 +32,14 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Parse the config and print the plan without invoking vllm.",
     )
+    parser.add_argument(
+        "--verify-only",
+        action="store_true",
+        help="Validate the expected result JSON files without invoking vllm.",
+    )
     args = parser.parse_args(argv)
+    if args.dry_run and args.verify_only:
+        parser.error("--dry-run and --verify-only cannot be combined")
 
     sweep = load_sweep(args.config)
 
@@ -47,6 +55,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.dry_run:
         print("[forge] dry-run, exiting without launching vllm.", file=sys.stderr)
+        return 0
+    if args.verify_only:
+        load_results(sweep.result_dir, sweep.concurrency_levels, sweep.name)
+        print("[forge] result JSON validation OK.", file=sys.stderr)
         return 0
 
     outcomes = run_sweep(sweep)

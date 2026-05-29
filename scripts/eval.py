@@ -12,14 +12,17 @@ import sys
 from pathlib import Path
 
 from forge.eval.config import load_suite
-from forge.eval.runner import run_suite
+from forge.eval.runner import run_suite, validate_output
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--verify-only", action="store_true")
     args = parser.parse_args(argv)
+    if args.dry_run and args.verify_only:
+        parser.error("--dry-run and --verify-only cannot be combined")
 
     suite = load_suite(args.config)
 
@@ -37,6 +40,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.dry_run:
         print("[forge] dry-run, exiting without launching lm-eval.", file=sys.stderr)
+        return 0
+    if args.verify_only:
+        validate_output(suite)
+        print("[forge] result JSON validation OK.", file=sys.stderr)
         return 0
 
     outcome = run_suite(suite)

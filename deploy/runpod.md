@@ -54,8 +54,9 @@ is started. None of these requires the GPU.
 
 ### Hugging Face access
 
-- [ ] `HF_TOKEN` env var is set on the pod's environment template (NOT in committed code).
+- [ ] `HF_TOKEN` env var is set on the pod's environment template, or you will log in once on the pod using the snippet below.
 - [ ] Token has "read" scope and is approved for the gated Llama 3.1 8B repo.
+- [ ] The pod either has `HF_TOKEN` set or has a cached Hugging Face token under `HF_HOME`.
 - [ ] On the M1, pulling the *tokenizer only* succeeds:
   ```bash
   HF_TOKEN=$YOUR_TOKEN uv run python -c "
@@ -89,9 +90,22 @@ uv pip install -c constraints/serve.txt vllm
 uv pip install -c constraints/eval.txt "lm-eval[api]"
 
 # 2. Auth
-export HF_TOKEN=hf_your_token_here
 export HF_HOME=/workspace/.cache/huggingface
 mkdir -p "$HF_HOME"
+read -rsp "HF token: " HF_TOKEN
+echo
+export HF_TOKEN
+uv run python - <<'PY'
+import os
+from huggingface_hub import HfApi, login
+
+token = os.environ["HF_TOKEN"]
+login(token=token, add_to_git_credential=False)
+api = HfApi(token=token)
+print("user:", api.whoami()["name"])
+print("model:", api.model_info("meta-llama/Llama-3.1-8B-Instruct").id)
+PY
+unset HF_TOKEN
 
 # 3. Download the ShareGPT trace
 mkdir -p /workspace/datasets
@@ -99,14 +113,42 @@ curl -fL --retry 5 --continue-at - \
   -o /workspace/datasets/ShareGPT_V3_unfiltered_cleaned_split.json \
   https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/ShareGPT_V3_unfiltered_cleaned_split.json
 
-# 4. Run BF16 variant
-bash deploy/runpod-run.sh --variant bf16
+# 4. Run BF16 variant detached from SSH
+mkdir -p logs
+nohup bash deploy/runpod-run.sh --variant bf16 > logs/runpod-bf16.log 2>&1 &
+tail -f logs/runpod-bf16.log
 
-# 5. Run AWQ variant (server restart is handled by the script)
-bash deploy/runpod-run.sh --variant awq
+# 5. Run AWQ variant detached from SSH
+nohup bash deploy/runpod-run.sh --variant awq > logs/runpod-awq.log 2>&1 &
+tail -f logs/runpod-awq.log
 
 # 6. Pull results to local
 # (from your M1, or use rsync / pod's file browser)
+```
+
+Do not run the paid variants in the SSH foreground. If the SSH connection drops,
+the foreground shell can terminate the orchestrator before it reaches eval.
+
+If a benchmark sweep completed but eval did not, resume only the missing eval:
+
+```bash
+nohup bash deploy/runpod-run.sh --variant bf16 --only-eval > logs/runpod-bf16-eval.log 2>&1 &
+tail -f logs/runpod-bf16-eval.log
+```
+
+## Result validation
+
+`scripts.bench` validates each expected `vllm bench` JSON after the subprocess
+exits. `scripts.eval` validates that the lm-eval output is parseable and
+contains every configured task before reporting success.
+
+To verify already-written files without rerunning the GPU work:
+
+```bash
+uv run python -m scripts.bench --config configs/bench-full.yaml --verify-only
+uv run python -m scripts.eval --config configs/eval-full-bf16.yaml --verify-only
+uv run python -m scripts.bench --config configs/bench-full-awq.yaml --verify-only
+uv run python -m scripts.eval --config configs/eval-full-awq.yaml --verify-only
 ```
 
 ## After the run

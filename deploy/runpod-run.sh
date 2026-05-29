@@ -9,21 +9,25 @@
 # Usage:
 #   ./deploy/runpod-run.sh --variant bf16         # full BF16 sweep + eval
 #   ./deploy/runpod-run.sh --variant awq          # full AWQ-INT4 sweep + eval
+#   ./deploy/runpod-run.sh --variant bf16 --only-eval
 #   ./deploy/runpod-run.sh --rehearsal            # M1 dress rehearsal, tiny model
 
 set -euo pipefail
 
 VARIANT=""
 REHEARSAL=0
+SKIP_BENCH=0
 SKIP_EVAL=0
 SERVER_READY_TIMEOUT=600     # seconds — full BF16 8B can take a few minutes
 SERVER_PORT=8000
 
 usage() {
     cat <<USAGE >&2
-Usage: $0 [--variant bf16|awq | --rehearsal] [--skip-eval]
+Usage: $0 [--variant bf16|awq | --rehearsal] [--skip-bench|--only-eval] [--skip-eval]
   --variant     Which model variant to benchmark + eval. Required unless --rehearsal.
   --rehearsal   Use tiny model + smoke configs. Validates the full pipeline.
+  --skip-bench  Skip the benchmark sweep (e.g. if it completed in a prior run).
+  --only-eval   Alias for --skip-bench.
   --skip-eval   Skip the quality eval step (e.g. if it ran in a prior run).
 USAGE
     exit 1
@@ -35,6 +39,8 @@ while [[ $# -gt 0 ]]; do
             VARIANT="$2"; shift 2 ;;
         --rehearsal)
             REHEARSAL=1; shift ;;
+        --skip-bench|--only-eval)
+            SKIP_BENCH=1; shift ;;
         --skip-eval)
             SKIP_EVAL=1; shift ;;
         -h|--help)
@@ -78,6 +84,33 @@ else
     exit 1
 fi
 
+if (( SKIP_BENCH == 1 && SKIP_EVAL == 1 )); then
+    echo "[runpod-run] nothing to run: --skip-bench/--only-eval cannot be combined with --skip-eval" >&2
+    exit 1
+fi
+
+requires_hf_auth() {
+    [[ "$MODEL_ID" == meta-llama/* ]]
+}
+
+has_hf_auth() {
+    if [[ -n "${HF_TOKEN:-}" || -n "${HUGGING_FACE_HUB_TOKEN:-}" ]]; then
+        return 0
+    fi
+
+    local home="${HOME:-}"
+    local hf_home="${HF_HOME:-$home/.cache/huggingface}"
+    [[ -s "$hf_home/token" || ( -n "$home" && -s "$home/.huggingface/token" ) ]]
+}
+
+if requires_hf_auth && ! has_hf_auth; then
+    cat >&2 <<ERROR
+[runpod-run] missing Hugging Face auth for gated model: $MODEL_ID
+[runpod-run] Set HF_TOKEN or log in with huggingface_hub before starting the paid run.
+ERROR
+    exit 1
+fi
+
 LOG_DIR="${LOG_DIR:-./logs}"
 mkdir -p "$LOG_DIR"
 SERVER_LOG="$LOG_DIR/server-$LABEL.log"
@@ -108,6 +141,7 @@ echo "[runpod-run] model=$MODEL_ID"
 echo "[runpod-run] quantization=$QUANTIZATION"
 echo "[runpod-run] max_model_len=$MAX_MODEL_LEN max_num_seqs=$MAX_NUM_SEQS"
 echo "[runpod-run] bench=$BENCH_CONFIG eval=$EVAL_CONFIG"
+echo "[runpod-run] skip_bench=$SKIP_BENCH skip_eval=$SKIP_EVAL"
 echo "[runpod-run] server_log=$SERVER_LOG"
 echo ""
 
@@ -139,9 +173,14 @@ until curl -sf "http://localhost:${SERVER_PORT}/health" > /dev/null 2>&1; do
 done
 echo "[runpod-run] /health is up after ${SECONDS}s"
 
-echo ""
-echo "[runpod-run] benchmark sweep…"
-uv run python -m scripts.bench --config "$BENCH_CONFIG"
+if (( SKIP_BENCH == 0 )); then
+    echo ""
+    echo "[runpod-run] benchmark sweep…"
+    uv run python -m scripts.bench --config "$BENCH_CONFIG"
+else
+    echo ""
+    echo "[runpod-run] benchmark sweep skipped."
+fi
 
 if (( SKIP_EVAL == 0 )); then
     echo ""

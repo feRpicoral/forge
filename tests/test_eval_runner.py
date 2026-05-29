@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
+import pytest
+
 from forge.eval.config import EvalSuite
-from forge.eval.runner import _build_command
+from forge.eval.runner import _build_command, run_suite
 
 
 def _suite(**overrides: object) -> EvalSuite:
@@ -58,3 +61,47 @@ def test_command_passes_few_shot_and_batch_size() -> None:
     cmd = _build_command("/lm-eval", _suite(num_fewshot=5, batch_size=8))
     assert cmd[cmd.index("--num_fewshot") + 1] == "5"
     assert cmd[cmd.index("--batch_size") + 1] == "8"
+
+
+def test_run_suite_accepts_valid_result(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    suite = _suite(result_dir=tmp_path)
+
+    class _FakeProc:
+        def __init__(self) -> None:
+            self.returncode = 0
+
+    def fake_run(cmd: list[str], check: bool = False) -> _FakeProc:
+        output_path = Path(cmd[cmd.index("--output_path") + 1])
+        output_path.write_text(
+            json.dumps({"results": {"hellaswag": {"acc_norm,none": 0.1}}}),
+            encoding="utf-8",
+        )
+        return _FakeProc()
+
+    monkeypatch.setattr("forge.eval.runner.subprocess.run", fake_run)
+
+    outcome = run_suite(suite, lm_eval_executable="/fake/lm-eval")
+
+    assert outcome.succeeded
+    assert outcome.result_path == suite.result_path
+
+
+def test_run_suite_rejects_result_missing_configured_task(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    suite = _suite(result_dir=tmp_path)
+
+    class _FakeProc:
+        def __init__(self) -> None:
+            self.returncode = 0
+
+    def fake_run(cmd: list[str], check: bool = False) -> _FakeProc:
+        output_path = Path(cmd[cmd.index("--output_path") + 1])
+        output_path.write_text(json.dumps({"results": {}}), encoding="utf-8")
+        return _FakeProc()
+
+    monkeypatch.setattr("forge.eval.runner.subprocess.run", fake_run)
+
+    outcome = run_suite(suite, lm_eval_executable="/fake/lm-eval")
+
+    assert not outcome.succeeded

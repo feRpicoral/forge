@@ -21,6 +21,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from forge.eval.compare import parse_lm_eval_output
 from forge.eval.config import EvalSuite
 
 
@@ -64,7 +65,21 @@ def run_suite(suite: EvalSuite, *, lm_eval_executable: str | None = None) -> Run
         return RunOutcome(result_path=suite.result_path, returncode=proc.returncode)
 
     canonical = _canonicalize_output(suite, run_started_at)
+    try:
+        validate_output(suite, canonical)
+    except Exception as exc:
+        print(f"[forge] eval result validation failed for {canonical}: {exc}", file=sys.stderr)
+        return RunOutcome(result_path=canonical, returncode=1)
     return RunOutcome(result_path=canonical, returncode=0)
+
+
+def validate_output(suite: EvalSuite, path: Path | None = None) -> None:
+    result_path = path or suite.result_path
+    parsed = parse_lm_eval_output(result_path)
+    found = {task.task for task in parsed}
+    missing = sorted(set(suite.tasks) - found)
+    if missing:
+        raise KeyError(f"missing task result(s): {', '.join(missing)}")
 
 
 def _canonicalize_output(suite: EvalSuite, run_started_at: float) -> Path:
