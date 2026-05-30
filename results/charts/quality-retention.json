@@ -1,31 +1,31 @@
 {
   "baseline_label": "bf16",
   "candidate_label": "awq",
-  "mean_retention_pct": 98.15403019757788,
+  "mean_retention_pct": 99.374102851785,
   "per_task": [
     {
       "task": "gsm8k",
       "metric": "exact_match",
-      "baseline_score": 0.8194,
-      "candidate_score": 0.7999,
-      "absolute_delta_pp": -1.9499999999999962,
-      "retention_pct": 97.62020990969003
+      "baseline_score": 0.7050796057619408,
+      "candidate_score": 0.7202426080363912,
+      "absolute_delta_pp": 1.5163002274450332,
+      "retention_pct": 102.15053763440861
     },
     {
       "task": "hellaswag",
       "metric": "acc_norm",
-      "baseline_score": 0.7891,
-      "candidate_score": 0.7782,
-      "absolute_delta_pp": -1.090000000000002,
-      "retention_pct": 98.61867950830059
+      "baseline_score": 0.8007369049990042,
+      "candidate_score": 0.7922724556861183,
+      "absolute_delta_pp": -0.8464449312885924,
+      "retention_pct": 98.94291754756871
     },
     {
       "task": "mmlu",
       "metric": "acc",
-      "baseline_score": 0.681,
-      "candidate_score": 0.6689,
-      "absolute_delta_pp": -1.21,
-      "retention_pct": 98.22320117474302
+      "baseline_score": 0.663936761145136,
+      "candidate_score": 0.6442102264634667,
+      "absolute_delta_pp": -1.9726534681669294,
+      "retention_pct": 97.02885337337767
     }
   ],
   "notes": []
