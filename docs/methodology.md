@@ -1,9 +1,6 @@
 # Methodology
 
-Forge reports two kinds of artifacts:
-
-- `results/bench/illustrative/` and `results/eval/illustrative/` are fixtures used to validate the chart and parser pipeline without paid GPU time.
-- `results/bench/full-*`, `results/eval/full/`, and `results/charts/` are the canonical artifacts for published claims now that the RunPod run has completed.
+Forge reports measured artifacts only: `results/bench/full-*`, `results/eval/full/`, and `results/charts/` are the canonical sources for published claims.
 
 ## Benchmark
 

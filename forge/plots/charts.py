@@ -34,9 +34,15 @@ def _save_pair(fig: Figure, output_dir: Path, stem: str) -> ChartPaths:
     png = output_dir / f"{stem}.png"
     svg = output_dir / f"{stem}.svg"
     fig.savefig(png)
-    fig.savefig(svg)
+    fig.savefig(svg, metadata={"Date": None})
+    _strip_trailing_whitespace(svg)
     plt.close(fig)
     return ChartPaths(png=png, svg=svg)
+
+
+def _strip_trailing_whitespace(path: Path) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
 
 
 def plot_throughput_vs_concurrency(
