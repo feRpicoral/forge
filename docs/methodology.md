@@ -2,10 +2,8 @@
 
 Forge reports two kinds of artifacts:
 
-- `results/bench/illustrative/` and the charts generated from it are placeholders used to validate the chart pipeline before paid GPU time.
-- `results/bench/full-*` and `results/eval/full/` are the canonical artifacts once the RunPod run has completed.
-
-Until the full RunPod directories exist, README numbers must keep the placeholder warning.
+- `results/bench/illustrative/` and `results/eval/illustrative/` are fixtures used to validate the chart and parser pipeline without paid GPU time.
+- `results/bench/full-*`, `results/eval/full/`, and `results/charts/` are the canonical artifacts for published claims now that the RunPod run has completed.
 
 ## Benchmark
 

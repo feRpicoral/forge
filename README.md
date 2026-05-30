@@ -1,10 +1,8 @@
 # Forge
 
-> ⚠️ **The numbers in this README are fictional placeholders, pending the actual benchmark run.** The chart pipeline and methodology are real; the *values* in the charts are plausible Llama 3.1 8B/A5000 estimates. Real measurements from the RunPod RTX A5000 run will replace them wholesale.
+> **Measured on a RunPod RTX A5000, BF16 Llama 3.1 8B Instruct served 2,169 total tokens/sec at peak and cost $0.035 per 1M tokens, about 181x cheaper than GPT-4o blended pricing. AWQ-INT4 retained 99.4% mean quality but was slower on this setup: 1,017 total tokens/sec and $0.074 per 1M tokens.**
 
-> **Self-host Llama 3.1 8B Instruct on a single $0.27/hr RTX A5000, serve it at ~5,200 generation tokens/sec, and pay ~$0.007 per 1M tokens — roughly **860× cheaper than GPT-4o** while retaining ~98% of full-precision quality.**
-
-Forge is a focused engineering artifact, not a SaaS. It serves an open-source LLM with a production-grade stack (vLLM + AWQ-INT4 + Marlin kernels), benchmarks it under realistic concurrency, evaluates quantization quality on standard tasks, and traces every dollar in the cost comparison back to a measured throughput number.
+Forge is a focused engineering artifact, not a SaaS. It serves an open-source LLM with a production-grade stack, benchmarks it under realistic concurrency, evaluates quantization quality on standard tasks, and traces every dollar in the cost comparison back to a measured throughput number.
 
 ## The picture
 
@@ -12,21 +10,21 @@ Forge is a focused engineering artifact, not a SaaS. It serves an open-source LL
 
 ![Throughput vs concurrency](./results/charts/throughput-vs-concurrency.png)
 
-AWQ-INT4 with Marlin kernels reaches ~10× the total token throughput of BF16 at high concurrency on the same GPU. The win comes from reduced HBM bandwidth pressure — INT4 weights are 4× smaller, so more requests fit in the same memory budget and continuous batching keeps the GPU saturated.
+BF16 was the throughput winner in the completed RunPod sweep: 2,169 total tokens/sec at concurrency 64, compared with 1,017 total tokens/sec for AWQ-INT4 on the same GPU. The AWQ run did not produce the expected memory-bandwidth win on this A5000/vLLM combination, so the result is a useful negative result rather than a quantization speedup claim.
 
 ### Time-to-first-token under load
 
 ![TTFT vs concurrency](./results/charts/ttft-vs-concurrency.png)
 
-TTFT scales with concurrency on both variants (prefill is compute-bound), but AWQ's smaller working set keeps it ~40% lower at every level.
+Latency split by metric. AWQ had lower high-concurrency TTFT in this run, with p99 TTFT of 508 ms at concurrency 64 versus 2,822 ms for BF16. BF16 had much faster decode, with mean TPOT of 52.7 ms at concurrency 64 versus 88.0 ms for AWQ.
 
 ### Cost per 1M tokens
 
 ![Cost per 1M tokens](./results/charts/cost-per-1m-tokens.png)
 
-Even at full BF16, self-hosting on a $0.27/hr A5000 is two orders of magnitude cheaper than GPT-4o blended pricing. With AWQ-INT4, the ratio is ~860×.
+At $0.27/hr compute, BF16 costs $0.035 per 1M total tokens at the measured peak throughput. AWQ costs $0.074 per 1M total tokens because it was slower in this run. Against GPT-4o blended pricing at $6.25 per 1M tokens, the measured self-hosted ratios are about 181x for BF16 and 85x for AWQ before storage and operational overhead.
 
-### Quantization retains ~98% of quality
+### Quantization retains 99.4% mean quality
 
 ![Quality retention](./results/charts/quality-retention.png)
 
@@ -34,15 +32,15 @@ AWQ-INT4 vs full BF16 on `meta-llama/Llama-3.1-8B-Instruct`, evaluated via `lm-e
 
 | Task | BF16 | AWQ-INT4 | Retention |
 |---|---|---|---|
-| MMLU (5-shot, `acc`) | 0.681 | 0.669 | 98.2% |
-| GSM8K (5-shot, `exact_match`) | 0.819 | 0.800 | 97.6% |
-| HellaSwag (5-shot, `acc_norm`) | 0.789 | 0.778 | 98.6% |
+| MMLU (5-shot, `acc`) | 0.664 | 0.644 | 97.0% |
+| GSM8K (5-shot, `exact_match`) | 0.705 | 0.720 | 102.2% |
+| HellaSwag (5-shot, `acc_norm`) | 0.801 | 0.792 | 98.9% |
 
-The 1.8 pp aggregate cost is bounded; the throughput and dollar gain are an order of magnitude bigger.
+The unweighted mean retention is 99.4%. AWQ slightly improved GSM8K, while losing 0.85 percentage points on HellaSwag and 1.97 points on MMLU.
 
 ## How to read this
 
-This repo answers one question rigorously: *"Should I self-host an open-source LLM instead of paying a commercial API?"* The answer is "yes, and here's exactly how cheap it gets, plus what you give up." Every claim above traces back to a JSON file in [`results/`](./results) whose metadata names the GPU, the vLLM version, the model SHA, and the date.
+This repo answers two questions rigorously: *"Should I self-host an open-source LLM instead of paying a commercial API?"* and *"Does AWQ-INT4 improve the economics on this 24 GB pod?"* The measured answer is that BF16 is strongly cost-competitive, while AWQ retained quality but did not improve throughput or cost on this setup. Every claim above traces back to raw benchmark/eval JSON plus chart JSON in [`results/`](./results).
 
 ## Architecture
 
@@ -78,7 +76,7 @@ flowchart TB
 | Dep manager | `uv` + `uv.lock` | Fastest resolver; deterministic; pins Python alongside packages. |
 | Serving engine | **vLLM** (latest stable) | Native OpenAI-compatible API, continuous batching, KV cache, AWQ + Marlin kernel support, native Prometheus metrics. |
 | Model | **Llama 3.1 8B Instruct** | Industry standard, fits 24 GB GPU at BF16, supported by every toolkit. |
-| Quantization | **AWQ-INT4 with Marlin kernels** | Fastest INT4 path on vLLM; ~1–2% better quality retention than GPTQ. |
+| Quantization | **AWQ-INT4 with Marlin kernels** | Candidate INT4 serving path supported by vLLM; measured against BF16 for quality, throughput, and cost. |
 | GPU | **RunPod RTX A5000 24 GB** | $0.27/hr compute — cheapest available tier that fits BF16 weights + KV cache. |
 | Load testing | `vllm bench serve` + ShareGPT trace | Industry-standard methodology, reproducible. |
 | Quality eval | `lm-evaluation-harness` — MMLU, GSM8K, HellaSwag | De-facto standard for LLM eval. |
@@ -117,7 +115,8 @@ git clone https://github.com/feRpicoral/forge.git && cd forge
 uv sync --group dev
 uv pip install -c constraints/serve.txt vllm
 uv pip install -c constraints/eval.txt "lm-eval[api]"
-export HF_TOKEN=hf_…
+export HF_TOKEN=hf_...
+export HF_HOME=/workspace/.cache/huggingface
 
 bash deploy/runpod-run.sh --variant bf16
 bash deploy/runpod-run.sh --variant awq
