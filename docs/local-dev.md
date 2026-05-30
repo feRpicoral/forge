@@ -57,7 +57,7 @@ Ollama runs natively on M1 via Metal, exposes an OpenAI-compatible API at `http:
 
 - Iterating on the HF Spaces Gradio demo (no need to wait for vLLM's CPU build between code changes).
 - Exercising the harness against realistic streaming behavior without committing to a from-source vLLM build.
-- Validating the chart pipeline against semi-realistic numbers when prototyping plots.
+- Exercising the harness against realistic streaming behavior without reporting those numbers.
 
 **It is a developer convenience, not the canonical smoke.** The benchmark methodology never reports Ollama numbers as if they were vLLM numbers.
 

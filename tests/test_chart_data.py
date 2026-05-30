@@ -32,6 +32,7 @@ def test_apply_style_updates_rcparams() -> None:
     mpl.rcParams.update({"axes.titlesize": 99})
     apply_style()
     assert mpl.rcParams["axes.titlesize"] == 13
+    assert mpl.rcParams["svg.hashsalt"] == "forge"
 
 
 def test_palette_has_canonical_keys() -> None:

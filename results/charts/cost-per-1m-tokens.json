@@ -2,13 +2,13 @@
   "self_hosted": [
     {
       "label": "Forge \u2014 BF16 on A5000",
-      "usd_per_1m_tokens": 0.015789473684210527,
-      "notes": "RunPod RTX A5000 Pod at 4750 tok/s sustained, 100% utilization."
+      "usd_per_1m_tokens": 0.034584869629623705,
+      "notes": "RunPod RTX A5000 Pod at 2169 tok/s sustained, 100% utilization."
     },
     {
       "label": "Forge \u2014 AWQ-INT4 on A5000",
-      "usd_per_1m_tokens": 0.007281553398058253,
-      "notes": "RunPod RTX A5000 Pod at 10300 tok/s sustained, 100% utilization."
+      "usd_per_1m_tokens": 0.07372342629950658,
+      "notes": "RunPod RTX A5000 Pod at 1017 tok/s sustained, 100% utilization."
     }
   ],
   "api": [

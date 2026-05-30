@@ -3,11 +3,6 @@
 Usage:
     python -m scripts.chart                       # rebuild from results/ defaults
     python -m scripts.chart --output results/charts
-
-When no real benchmark data is committed yet, this script emits illustrative
-charts from synthetic data shipped under ``results/illustrative/`` so the
-chart pipeline itself can be validated. Real charts replace those files after
-the paid RunPod run.
 """
 
 from __future__ import annotations
@@ -47,13 +42,13 @@ def main(argv: list[str] | None = None) -> int:
     bench_root = args.results_root / "bench"
     eval_root = args.results_root / "eval"
 
-    bf16_dir = _first_existing([bench_root / "full-bf16", bench_root / "illustrative" / "bf16"])
-    awq_dir = _first_existing([bench_root / "full-awq", bench_root / "illustrative" / "awq"])
-    eval_dir = _first_existing([eval_root / "full", eval_root / "illustrative"])
+    bf16_dir = bench_root / "full-bf16"
+    awq_dir = bench_root / "full-awq"
+    eval_dir = eval_root / "full"
 
-    if not bf16_dir or not awq_dir:
+    if not bf16_dir.exists() or not awq_dir.exists():
         print(
-            "[forge] no bench results found. Run the paid sweep or use illustrative data.",
+            "[forge] full bench results not found. Run the paid sweep before charting.",
             file=sys.stderr,
         )
         return 1
@@ -123,13 +118,6 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {p.svg}", file=sys.stderr)
 
     return 0
-
-
-def _first_existing(candidates: list[Path]) -> Path | None:
-    for c in candidates:
-        if c.exists():
-            return c
-    return None
 
 
 def _load_bench_dir(directory: Path) -> list[BenchmarkRow]:

@@ -70,6 +70,7 @@ def apply_style() -> None:
             "savefig.facecolor": "white",
             "figure.facecolor": "white",
             "axes.facecolor": "white",
+            "svg.hashsalt": "forge",
             # Legend
             "legend.frameon": False,
             "legend.loc": "best",
