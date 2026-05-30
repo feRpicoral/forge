@@ -22,7 +22,7 @@ tightly-scripted shell command, not exploration.
 | Image | `runpod-torch-v240` | Active pod image. Matches the PyTorch/CUDA runtime needed by vLLM. |
 | vCPU / memory | **9 vCPU / 50 GB RAM** | Active pod shape. |
 | Container disk | **20 GB** | Keep model weights off this disk. |
-| Volume | **50 GB mounted at `/workspace`** | Minimum for BF16 + AWQ caches. Use 80–100 GB for new pods if available. |
+| Volume | **50 GB mounted at `/workspace`** | Enough for Llama 3.1 8B BF16 + AWQ caches, datasets, results, and logs. |
 | Price | **$0.27/hr compute; ~$0.28/hr running total** | $0.003/hr container storage + $0.007/hr volume storage. |
 | Idle shutdown | **15 min** | Belt and suspenders against forgetting to stop the pod. |
 
