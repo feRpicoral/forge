@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Production-grade LLM inference serving & optimization — benchmarks, quantization, cost analysis"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-authors = [{ name = "Fernando Picoral", email = "fernandopicoral@gmail.com" }]
+authors = [{ name = "Fernando Picoral", email = "fernando@picoral.com" }]
 license = { text = "MIT" }
 dependencies = [
     "gradio>=6.14.0",
